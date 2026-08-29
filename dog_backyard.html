@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🐕 AI 狗狗后院 v3.0</title>
+<title>🐕 AI 狗狗后院 v3.2</title>
 <style>
   :root{--bg:#10161e;--panel:#1c2633;--panel2:#26344a;--line:#3a4c61;--txt:#eef4f8;
     --sub:#9fb2c3;--acc:#ffc94d;--acc2:#7fd18c;--acc3:#7cc4ff;--danger:#ff7a6b;}
@@ -65,7 +65,7 @@
 </head>
 <body>
 <header>
-  <h1 id="headTitle">🐕 AI 狗狗后院 <span style="font-size:12px;color:var(--sub)">v3.0</span></h1>
+  <h1 id="headTitle">🐕 AI 狗狗后院 <span style="font-size:12px;color:var(--sub)">v3.2</span></h1>
   <span class="hchip">🕐 <b id="clockTxt">09:00</b> <span id="weatherTxt">☀️ 晴</span></span>
   <span class="hchip">🎚 Lv.<b id="lvl">1</b> ✨<b id="xp">0</b></span>
   <span class="hchip" id="spdTxt">⏩ 1x</span>
@@ -200,7 +200,7 @@
 
 <script>
 /* =====================================================================
- * AI 狗狗后院 v3.0 —— 模块化 + 模组版
+ * AI 狗狗后院 v3.2 —— 模块化 + 模组版（动态世界/相机/倍速）
  * 架构遵循《通用游戏AI逻辑模板》：状态(State) + 动作(Action) + 策略(Policy) + 评估(Evaluate)
  *  感知(Sense) → 决策(Think) → 行动(Act) → 环境更新 → 循环
  * 核心命名空间 window.Dog：
@@ -226,8 +226,23 @@ window.Dog={
   Strategies:{ _list:{} },
   Evaluate:{},
   Mods:{ _list:{} },
-  hooks:{ tick:[], render:[], action:[], save:[], load:[] },
+  hooks:{ tick:[], render:[], action:[], save:[], load:[], ui:[] },
+  camera:{x:0,y:0,ww:W,wh:H},
   emit(kind, ...args){ (Dog.hooks[kind]||[]).forEach(fn=>{ try{fn(...args);}catch(e){ console.error('[hook]',kind,e); } }); }
+};
+
+/* 模组通用 API：世界尺寸 / 边界 / 倍速（供模组调用，增强兼容性） */
+Dog.setWorld=function(w,h){
+  S.worldW=Math.max(W,Math.round(w)); S.worldH=Math.max(H,Math.round(h));
+  log('🌍 世界认知扩大至 '+S.worldW+' × '+S.worldH);
+  return {w:S.worldW,h:S.worldH};
+};
+Dog.getBounds=function(){ return {w:S.worldW||W,h:S.worldH||H}; };
+Dog.setSpeed=function(x){
+  x=Math.max(0.01,Math.min(1000,+x||1));
+  S.speed=x; const el=$('spdTxt'); if(el)el.textContent='⏩ '+(x%1?Number(x.toFixed(2)):x)+'x';
+  log('⏩ 游戏速度已设为 '+x+'x');
+  return x;
 };
 
 /* ---------- 模组系统 ---------- */
@@ -341,6 +356,7 @@ Dog.Mods.loadSample=function(){
  * ===================================================================== */
 const S={
   paused:false, speed:1, sound:true,
+  worldW:W, worldH:H,
   dayLen:420,            // 一天 = 420 秒真实
   t:9/24*86400,          // 当前游戏秒（从 9:00 开始）
   weather:'sunny', wTimer:40,
@@ -513,7 +529,7 @@ Dog.Actions.candidates=function(){
   return base.concat(Object.keys(Dog.Actions._list).filter(n=>base.indexOf(n)<0));
 };
 
-function goTo(x,y){ const d=S.dog; d.tx=clamp(x,30,W-30); d.ty=clamp(y,70,H-40);
+function goTo(x,y){ const d=S.dog; const ww=S.worldW||W,wh=S.worldH||H; d.tx=clamp(x,30,ww-30); d.ty=clamp(y,70,wh-40);
   if(Math.hypot(d.tx-d.x,d.ty-d.y)>6){ d.moving=true; d.action='walk'; d.sitting=false; d.rolling=false; d.stayT=0; } }
 function stopMoving(){S.dog.moving=false;}
 function setAction(a){
@@ -528,7 +544,7 @@ function execTool(name,args){
   let result='';
   switch(name){
     case 'move_to':{
-      const x=clamp(args.x??rand(W),30,W-30),y=clamp(args.y??rand(H),70,H-40);
+      const x=clamp(args.x??rand(S.worldW||W),30,(S.worldW||W)-30),y=clamp(args.y??rand(S.worldH||H),70,(S.worldH||H)-40);
       goTo(x,y); S.stats.walk++; setAction('walk');
       think(args.reason||'我想去那边闻闻'); result=`去 (${x|0},${y|0})`; break;
     }
@@ -607,8 +623,8 @@ function cmd(c){execTool(c,{});log('🛠 指令：'+({sit:'坐下',roll:'打滚'
 /* 扔玩具 */
 function throwToy(kind){
   const d=S.dog; const target={x:d.x+(d.face*120+ (d.face>0?120:-120)),y:d.y-40};
-  S.ball={x:d.x,y:d.y-30,kind,state:'fly',t0:S.t,px:d.x,py:d.y-30,tx:clamp(target.x,40,W-40),ty:clamp(target.y,40,H-60)};
-  goTo(clamp(target.x,40,W-40),clamp(target.y,60,H-80));
+  S.ball={x:d.x,y:d.y-30,kind,state:'fly',t0:S.t,px:d.x,py:d.y-30,tx:clamp(target.x,40,(S.worldW||W)-40),ty:clamp(target.y,40,(S.worldH||H)-60)};
+  goTo(clamp(target.x,40,(S.worldW||W)-40),clamp(target.y,60,(S.worldH||H)-80));
   setAction('walk'); think('球飞出去了！我去捡！'); setTimeout(()=>{ if(S.ball&&S.ball.state==='fly'){S.ball.state='ground';finishFetch();} },1400);
 }
 function finishFetch(){
@@ -931,12 +947,19 @@ function toggleSound(){soundOn=!soundOn;S.sound=soundOn;$('sndBtn').textContent=
 const isNight=()=>{const h=S.t/3600;return h>=20||h<6;};
 function render(){
   ctx.clearRect(0,0,W,H);
+  const ww=S.worldW||W, wh=S.worldH||H;
+  const cx=clamp(S.dog.x, W/2, ww-W/2), cy=clamp(S.dog.y, H/2, wh-H/2);
+  Dog.camera={x:cx, y:cy, ww:ww, wh:wh};
+  ctx.save();
+  ctx.translate(Math.round(W/2-cx), Math.round(H/2-cy));
   const h=S.t/3600;
   drawSky(h); drawBackyard(h); drawDecals();
   seedBfs(); drawButterflies();
   if(S.ball)drawBall();
   drawDog(); drawBubble(); drawWeatherFx();
-  Dog.emit('render', ctx);   // 模组渲染钩子（在暗化之前，模组可自己处理）
+  Dog.emit('render', ctx);   // 模组渲染钩子（世界坐标，相机已应用）
+  ctx.restore();
+  Dog.emit('ui', ctx);       // 模组 UI 钩子（屏幕坐标）
   if(isNight()){ctx.fillStyle='rgba(10,10,40,.45)';ctx.fillRect(0,0,W,H);}
 }
 let bxT=0;
@@ -946,28 +969,32 @@ function drawSky(h){
   else if(h>=18&&h<20){const k=(h-18)/2;lit=1-k*0.8;top='#f7b267';bot='#f2d1a0';}
   else if(h>=20||h<5){lit=0.25;top='#0e1a33';bot='#1a2b4a';}
   else {lit=0.4;top='#1d3a66';bot='#3a5a8a';}
-  const g=ctx.createLinearGradient(0,0,0,H);
+  const ww=S.worldW||W, wh=S.worldH||H;
+  const g=ctx.createLinearGradient(0,0,0,wh);
   g.addColorStop(0,top);g.addColorStop(.6,bot);g.addColorStop(1,'#7ecf6f');
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=g;ctx.fillRect(0,0,ww,wh);
   if(lit>0.5){
-    ctx.fillStyle='rgba(255,235,150,'+(lit)+')';ctx.beginPath();ctx.arc(830,60,26,0,7);ctx.fill();
+    ctx.fillStyle='rgba(255,235,150,'+(lit)+')';ctx.beginPath();ctx.arc(ww*0.86,60,26,0,7);ctx.fill();
   }else{
-    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(820,60,20,0,7);ctx.fill();
-    ctx.fillStyle='#dbe6ff';[[760,45],[860,80],[840,40]].forEach(c=>{ctx.beginPath();ctx.arc(c[0],c[1],3,0,7);ctx.fill();});
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ww*0.85,60,20,0,7);ctx.fill();
+    ctx.fillStyle='#dbe6ff';[[ww*0.79,45],[ww*0.9,80],[ww*0.875,40]].forEach(c=>{ctx.beginPath();ctx.arc(c[0],c[1],3,0,7);ctx.fill();});
   }
   if(S.weather!=='rain'||true){ctx.fillStyle='rgba(255,255,255,'+(isNight()?0.25:0.8)+')';
-    [[120,70],[330,95],[620,55],[500,120]].forEach(c=>{c[0]+=Math.sin(Date.now()/9000)*6;
+    [[ww*0.12,70],[ww*0.34,95],[ww*0.65,55],[ww*0.52,120]].forEach(c=>{c[0]+=Math.sin(Date.now()/9000)*6;
       ctx.beginPath();ctx.arc(c[0],c[1],16,0,7);ctx.arc(c[0]+20,c[1]-6,20,0,7);ctx.arc(c[0]+40,c[1],16,0,7);ctx.fill();});}
-  if(S.weather==='rain'){ctx.fillStyle='rgba(120,120,130,.6)';ctx.fillRect(340,76,90,26);ctx.fillRect(580,70,70,20);}
-  if(S.weather==='snow'){ctx.fillStyle='rgba(200,210,230,.7)';ctx.fillRect(340,76,90,26);}
+  if(S.weather==='rain'){ctx.fillStyle='rgba(120,120,130,.6)';ctx.fillRect(ww/2-140,76,90,26);ctx.fillRect(ww/2+100,70,70,20);}
+  if(S.weather==='snow'){ctx.fillStyle='rgba(200,210,230,.7)';ctx.fillRect(ww/2-140,76,90,26);}
 }
 function drawBackyard(h){
-  ctx.fillStyle='#79c05e';ctx.fillRect(0,140,W,H-140);
+  const ww=S.worldW||W, wh=S.worldH||H;
+  ctx.fillStyle='#79c05e';ctx.fillRect(0,140,ww,wh-140);
   ctx.fillStyle='rgba(0,80,0,.08)';
-  for(let i=0;i<160;i++){const x=((i*97)%W),y=150+((i*53)%(H-150));ctx.fillRect((x+Math.sin(x*.05)*6)%W,y,3,3);}
+  const grassN=Math.min(5000,Math.max(160,Math.round(ww*wh/5200)));
+  for(let i=0;i<grassN;i++){const x=((i*97)%ww),y=150+((i*53)%(wh-150));ctx.fillRect((x+Math.sin(x*.05)*6)%ww,y,3,3);}
   ctx.fillStyle=isNight()?'#6a4a28':'#a9743f';
-  for(let x=0;x<W;x+=46){ctx.fillRect(x,138,40,8);ctx.fillRect(x+30,94,8,56);}
-  ctx.fillRect(0,90,W,8);
+  for(let x=0;x<ww;x+=46){ctx.fillRect(x,138,40,8);ctx.fillRect(x+30,94,8,56);}
+  ctx.fillRect(0,90,ww,8);
+  for(let x=0;x<ww;x+=46){ctx.fillRect(x,wh-46,40,8);ctx.fillRect(x+30,wh-54,8,30);}
   drawDoghouse(70,470);
   ctx.fillStyle=isNight()?'#4a2c16':'#7a4a24';ctx.fillRect(132,150,16,70);
   ctx.fillStyle=isNight()?'#2f5e2c':'#3f8f3a';
@@ -1080,12 +1107,13 @@ function drawBubble(){
   ctx.fillText(t,bx+8,by+27);
 }
 function drawWeatherFx(){
+  const ww=S.worldW||W, wh=S.worldH||H;
   if(S.weather==='rain'){ctx.strokeStyle='rgba(180,210,255,.6)';ctx.lineWidth=1;
-    for(let i=0;i<50;i++){const x=(i*59+Date.now()/8)%W, y=(Date.now()/40+i*137)%H;
+    for(let i=0;i<Math.min(300,Math.round(ww*wh/20000));i++){const x=(i*59+Date.now()/8)%ww, y=(Date.now()/40+i*137)%wh;
       ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+10);ctx.stroke();}}
   if(S.weather==='snow'){ctx.fillStyle='rgba(255,255,255,.9)';
-    if(!S.snow.length)for(let i=0;i<60;i++)S.snow.push({x:rand(W),y:rand(H),s:rand(3)+2});
-    S.snow.forEach(f=>{f.y+=f.s*0.4+ (S.speed*0.3);if(f.y>H)f.y=0;f.x+=Math.sin(Date.now()/1000+f.s)*0.5;
+    if(!S.snow.length)for(let i=0;i<Math.min(300,Math.round(ww*wh/15000));i++)S.snow.push({x:rand(ww),y:rand(wh),s:rand(3)+2});
+    S.snow.forEach(f=>{f.y+=f.s*0.4+ (S.speed*0.3);if(f.y>wh)f.y=0;f.x+=Math.sin(Date.now()/1000+f.s)*0.5;
       ctx.beginPath();ctx.arc(f.x,f.y,f.s,0,7);ctx.fill();});}
 }
 
@@ -1175,7 +1203,7 @@ loadAll();loadCfg();updateStatus();updateStratUI();renderMemory();renderAchieve(
 QL.load();
 $('headTitle').textContent='🐕 '+S.name+' 的后院';
 log('🐕 欢迎回来！'+S.name+' 已就位。');
-log('🧠 v3.0 已整合《通用游戏AI逻辑模板》：状态/动作/策略/评估 + 模组系统');
+log('🧠 v3.2 已整合《通用游戏AI逻辑模板》：状态/动作/策略/评估 + 模组系统 + 动态世界/相机');
 log('💡 提示：点画布移动、点物件互动、空格暂停、可切换策略、加载模组。');
 requestAnimationFrame(loop);
 </script>
@@ -1580,6 +1608,126 @@ requestAnimationFrame(loop);
       }
     }
   }
+  });
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * ⏩ 倍速模组 speed-mod-v1.js  v1.0.0
+ * 特性：侧边栏新增倍速控制面板，游戏速度可调 0.01x ~ 1000x
+ *   - 预设按钮：0.01x / 0.5x / 1x / 10x / 100x / 1000x
+ *   - 对数滑块：1x → 1000x 平滑调节
+ *   - 输入框：可精确输入 0.01~1000 任意值
+ *   - 与顶部 ⏩ 速度 chip 联动显示
+ * 加载方式：游戏内「🧩 模组」→「📂 加载模组(.js)」选择本文件
+ * ===================================================================== */
+(function () {
+  'use strict';
+
+  Dog.Mods.register({
+    id: 'speed-mod',
+    name: '⏩ 倍速模组（0.01x-1000x）',
+    version: '1.0.0',
+    desc: '侧边栏新增倍速面板：预设按钮 + 对数滑块 + 输入框，游戏速度可调 0.01 ~ 1000 倍速。',
+
+    onLoad(D) {
+      if (!D.setSpeed) { log('⚠ 倍速模组需要主程序 v3.2+（Dog.setSpeed）'); return; }
+      const side = document.querySelector('.side');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>⏩ 倍速控制 <small style="color:var(--sub)">v1.0</small></h3>
+        <div class="lblrow"><span>当前速度</span><b id="spdVal" style="color:var(--acc)">1x</b></div>
+        <input type="range" id="spdRange" min="1" max="1000" value="10" style="width:100%">
+        <div class="row" style="margin-top:6px;flex-wrap:wrap">
+          <button class="ghost" onclick="__spdSet(0.01)">0.01x</button>
+          <button class="ghost" onclick="__spdSet(0.5)">0.5x</button>
+          <button class="ghost" onclick="__spdSet(1)">1x</button>
+          <button class="ghost" onclick="__spdSet(10)">10x</button>
+          <button class="ghost" onclick="__spdSet(100)">100x</button>
+          <button class="ghost" onclick="__spdSet(1000)">1000x</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="number" id="spdNum" min="0.01" max="1000" step="0.01" value="1" style="flex:1;min-width:0">
+          <button class="blue" onclick="__spdApply()">应用</button>
+        </div>
+        <div class="note" style="margin-top:4px">滑块为对数刻度（1→1000）；输入框可填 0.01~1000 任意值。100x 以上画面会剧烈加速，属正常现象。</div>`;
+      side.appendChild(card);
+
+      window.__spdSet = function (x) { D.setSpeed(x); sync(); };
+      window.__spdApply = function () {
+        const v = parseFloat($('spdNum').value);
+        if (isFinite(v)) D.setSpeed(v); sync();
+      };
+      function sync() {
+        const v = +S.speed.toFixed(3);
+        $('spdVal').textContent = v + 'x';
+        $('spdRange').value = Math.min(1000, Math.max(1, Math.round(1 + Math.log10(Math.max(1, v)) / 3 * 999)));
+        $('spdNum').value = v;
+      }
+      $('spdRange').addEventListener('input', function () {
+        const r = +this.value;
+        D.setSpeed(Math.pow(10, (r - 1) / 999 * 3));
+        sync();
+      });
+      sync();
+      log('⏩ 倍速模组已就绪：0.01x ~ 1000x 可调');
+    },
+
+    onUnload() {
+      const el = $('spdRange'); if (el && el.closest('.card')) el.closest('.card').remove();
+      delete window.__spdSet; delete window.__spdApply;
+    }
+  });
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * 🌍 更大的院子模组 world-mod-v1.js  v1.0.0
+ * 特性：装载后右上角出现「🌍 扩大院子 ×10」按钮
+ *   - 点击一次，世界认知扩大为原先的 10 倍（可无限叠加）
+ *   - 主程序 v3.2+ 提供动态世界与相机跟随：狗/猫可探索更大的院子
+ *   - 背景（草地/栅栏/天空/雨雪）按世界尺寸自动铺满
+ * 加载方式：游戏内「🧩 模组」→「📂 加载模组(.js)」选择本文件
+ * ===================================================================== */
+(function () {
+  'use strict';
+
+  Dog.Mods.register({
+    id: 'world-mod',
+    name: '🌍 更大的院子（世界扩大）',
+    version: '1.0.0',
+    desc: '右上角出现按钮，点击将世界认知扩大 10 倍，可叠加；配合相机跟随探索更大院子。',
+
+    onLoad(D) {
+      if (!D.setWorld) { log('⚠ 世界模组需要主程序 v3.2+（Dog.setWorld）'); return; }
+      const btn = document.createElement('button');
+      btn.id = 'worldBtn';
+      btn.textContent = '🌍 扩大院子 ×10';
+      Object.assign(btn.style, {
+        position: 'fixed', top: '12px', right: '12px', zIndex: '999',
+        background: 'linear-gradient(135deg,#2ecc71,#1abc9c)', color: '#fff', border: 'none',
+        borderRadius: '20px', padding: '9px 16px', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+        boxShadow: '0 3px 10px rgba(0,0,0,.28)', transition: 'transform .15s'
+      });
+      btn.onmouseenter = () => { btn.style.transform = 'scale(1.06)'; };
+      btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
+      btn.onclick = function () {
+        const b = D.getBounds();
+        const r = D.setWorld(b.w * 10, b.h * 10);
+        toasty('🌍 世界认知 ×10 → ' + r.w + ' × ' + r.h);
+        log('🌍 院子已扩大 10 倍：' + b.w + '×' + b.h + ' → ' + r.w + '×' + r.h + '（可继续叠加）');
+      };
+      document.body.appendChild(btn);
+      this._btn = btn;
+      log('🌍 世界模组已加载：右上角按钮可把院子扩大 10 倍，可叠加');
+    },
+
+    onUnload() {
+      const b = document.getElementById('worldBtn'); if (b) b.remove();
+    }
   });
 })();
 
