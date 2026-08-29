@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐕 AI 狗狗后院 v3.2</title>
+<style>
+  :root{--bg:#10161e;--panel:#1c2633;--panel2:#26344a;--line:#3a4c61;--txt:#eef4f8;
+    --sub:#9fb2c3;--acc:#ffc94d;--acc2:#7fd18c;--acc3:#7cc4ff;--danger:#ff7a6b;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+  header{padding:8px 16px;background:#0d1520;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:17px;margin:0}
+  .hchip{font-size:12px;background:var(--panel2);padding:3px 10px;border-radius:20px;color:var(--sub)}
+  .hchip b{color:var(--acc)}
+  .wrap{display:flex;gap:14px;padding:12px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  canvas{background:#87ceeb;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:block;max-width:100%;cursor:crosshair}
+  .side{width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .card h3{margin:0 0 8px;font-size:12.5px;color:var(--acc);letter-spacing:.4px;display:flex;justify-content:space-between;align-items:center}
+  label{font-size:12px;color:var(--sub);display:block;margin:7px 0 3px}
+  input[type=text],input[type=password],input[type=color],select,textarea{
+    width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--txt);font-size:12.5px;outline:none}
+  input:focus,textarea:focus{border-color:var(--acc)}
+  input[type=color]{padding:2px;height:30px;cursor:pointer}
+  input[type=file]{font-size:11px;color:var(--sub)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button{cursor:pointer;border:none;border-radius:8px;padding:7px 11px;font-size:12.5px;background:var(--acc2);color:#0e2b16;font-weight:700;transition:.15s}
+  button:hover{filter:brightness(1.08)}
+  button.ghost{background:var(--panel2);color:var(--txt);font-weight:500}
+  button.warn{background:var(--danger);color:#310b07}
+  button.acc{background:var(--acc);color:#33240a}
+  button.blue{background:var(--acc3);color:#0a2b3d}
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .toolbar .grp{display:flex;gap:4px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:4px}
+  .toolbar button{padding:6px 9px;font-size:12px}
+  #thoughtBox{min-height:42px;border-left:3px solid var(--acc);padding:6px 10px;background:var(--panel2);border-radius:6px;font-size:13px;font-style:italic;color:#ffe9b8;margin-bottom:6px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+  .pill{background:var(--panel2);border-radius:20px;padding:3px 9px;font-size:11.5px;text-align:center}
+  .pill b{color:var(--acc)}
+  #log{height:120px;overflow-y:auto;background:#0d141d;border-radius:8px;padding:8px;font-size:11.5px;line-height:1.6;font-family:Consolas,monospace;color:#bfe3ff}
+  #memory{height:60px;overflow-y:auto;background:#0d141d;border-radius:8px;padding:8px;font-size:11.5px;color:#e8d9a8}
+  #achieve{display:flex;flex-wrap:wrap;gap:5px;font-size:11px}
+  #achieve div{background:var(--panel2);padding:3px 8px;border-radius:14px}
+  #achieve .off{opacity:.35}
+  #modList{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;font-size:11.5px}
+  #modList .mod{border:1px solid var(--line);border-radius:8px;padding:4px 8px;display:flex;justify-content:space-between;align-items:center;background:var(--panel2)}
+  #modList .mod small{color:var(--sub)}
+  small,.note{color:var(--sub);font-size:11px;line-height:1.5}
+  .status-dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--acc2);margin-right:5px}
+  .status-dot.off{background:#666}
+  .bar{height:8px;background:#0d141d;border-radius:6px;overflow:hidden;position:relative;margin:2px 0}
+  .bar>i{display:block;height:100%;border-radius:6px;transition:width .3s}
+  .lblrow{display:flex;justify-content:space-between;font-size:11px;color:var(--sub)}
+  .tabs{display:flex;gap:4px;margin-bottom:8px}
+  .tabs button{flex:1;background:var(--panel2);color:var(--sub);font-weight:500;padding:6px}
+  .tabs button.on{background:var(--acc);color:#33240a}
+  .tabpane{display:none}
+  .tabpane.on{display:block}
+  #stratInfo{font-size:11px;color:var(--sub);margin-top:4px}
+  .tag{font-size:10px;background:#1d2b3d;border:1px solid var(--line);border-radius:10px;padding:1px 7px;color:var(--sub)}
+  body::after{content:"🎉 点击画布移动 · 点树/水潭/消防栓/狗粮碗/垃圾桶互动 · 空格暂停 · 支持模组";position:fixed;bottom:6px;right:8px;font-size:10px;color:#ffffff66}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="headTitle">🐕 AI 狗狗后院 <span style="font-size:12px;color:var(--sub)">v3.2</span></h1>
+  <span class="hchip">🕐 <b id="clockTxt">09:00</b> <span id="weatherTxt">☀️ 晴</span></span>
+  <span class="hchip">🎚 Lv.<b id="lvl">1</b> ✨<b id="xp">0</b></span>
+  <span class="hchip" id="spdTxt">⏩ 1x</span>
+  <span class="hchip">🧩 模组 <b id="modCount">0</b></span>
+  <span id="aiStatus"><span class="status-dot off" id="aiDot"></span><span id="aiStatusTxt" style="font-size:12px;color:var(--sub)">本地规则 AI</span></span>
+  <div style="margin-left:auto" class="toolbar">
+    <div class="grp"><button onclick="throwToy('ball')">🎾 扔球</button><button onclick="throwToy('frisbee')">🥏 扔飞盘</button><button onclick="throwToy('bone')">🦴 扔骨头</button></div>
+    <div class="grp"><button class="acc" onclick="fillBowl()">🍚 狗粮</button><button onclick="giveTreat()">🍗 奖励零食</button><button onclick="petDog()">🤚 摸摸</button></div>
+    <div class="grp"><button onclick="cmd('sit')">🪑 坐下</button><button onclick="cmd('roll')">🔄 打滚</button><button onclick="cmd('paw')">🤝 握手</button><button onclick="cmd('stay')">✋ 别动</button></div>
+    <div class="grp"><button class="ghost" onclick="toggleSound()" id="sndBtn">🔊</button><button class="ghost" onclick="togglePause()" id="pseBtn">⏸</button><button class="ghost" onclick="cycleSpeed()">⏩</button></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div>
+    <canvas id="scene" width="960" height="620"></canvas>
+    <div class="row" style="margin-top:8px;justify-content:space-between">
+      <button class="ghost" onclick="togglePause()">⏸/▶ 暂停</button>
+      <button class="acc" onclick="aiTickNow()">⚡ 让 AI 立即行动</button>
+      <button class="blue" onclick="learnNow()">🧠 Q学习一轮</button>
+      <button class="ghost" onclick="exportAll()">📦 导出备份</button>
+      <button class="ghost" onclick="importAll()">📥 导入</button>
+    </div>
+    <input type="file" id="impfile" accept=".json" style="display:none" onchange="doImport(event)">
+  </div>
+
+  <div class="side">
+    <div class="card">
+      <h3>🐕 狗狗 & 状态</h3>
+      <div class="row" style="margin-bottom:4px">
+        <div style="flex:1">
+          <label style="margin-top:0">名字</label><input id="dogName" type="text" value="旺财" onchange="saveDogPrefs()">
+        </div>
+        <div style="width:60px">
+          <label style="margin-top:0">毛色</label><input id="dogColor" type="color" value="#c9954f" onchange="saveDogPrefs()">
+        </div>
+        <div style="width:90px">
+          <label style="margin-top:0">品种</label><select id="breed" onchange="saveDogPrefs()">
+            <option value="golden">金毛</option><option value="husky">哈士奇</option>
+            <option value="corgi">柯基</option><option value="poodle">泰迪</option>
+          </select>
+        </div>
+      </div>
+      <div class="lblrow"><span>⚡ 精力</span><span id="nrg">100</span></div><div class="bar"><i id="bNrg" style="width:100%;background:#7fd18c"></i></div>
+      <div class="lblrow"><span>🍖 饥饿</span><span id="hng">0</span></div><div class="bar"><i id="bHng" style="width:0%;background:#ffc94d"></i></div>
+      <div class="lblrow"><span>💧 膀胱</span><span id="bld">0</span></div><div class="bar"><i id="bBld" style="width:0%;background:#7cc4ff"></i></div>
+      <div class="lblrow"><span>😊 心情</span><span id="mood">100</span></div><div class="bar"><i id="bMood" style="width:100%;background:#ff9ad5"></i></div>
+      <div class="lblrow"><span>💛 忠诚</span><span id="loy">0</span></div><div class="bar"><i id="bLoy" style="width:0%;background:#ffb347"></i></div>
+      <div style="margin-top:6px;font-size:11px;color:var(--sub)">行为记录：💦<span id="stPee">0</span> 🔊<span id="stBark">0</span> ⛏<span id="stDig">0</span> 🎾<span id="stFetch">0</span> 😴<span id="stSleep">0</span> 🚶<span id="stWalk">0</span> 🗑<span id="stRummage">0</span></div>
+      <div style="margin-top:7px" class="toolbar">
+        <button onclick="petDog()">🤚 摸摸</button><button onclick="giveTreat()">🍗 零食</button>
+        <button onclick="fillBowl()">🍚 狗粮</button><button onclick="throwToy('ball')">🎾 球</button>
+        <button onclick="cmd('sit')">🪑 坐下</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>💭 狗狗的想法 <span class="tag" id="stratTag">策略: rule</span></h3>
+      <div id="thoughtBox">（AI 还没开始思考，点「⚡让AI行动」或稍等片刻…）</div>
+      <div class="tabs">
+        <button id="tabL" class="on" onclick="tab('L')">📜 思想日志</button>
+        <button id="tabM" onclick="tab('M')">🧠 长期记忆</button>
+        <button id="tabA" onclick="tab('A')">🏆 成就</button>
+      </div>
+      <div id="paneL" class="tabpane on"><div id="log"></div></div>
+      <div id="paneM" class="tabpane"><div id="memory"></div></div>
+      <div id="paneA" class="tabpane"><div id="achieve"></div></div>
+    </div>
+
+    <div class="card">
+      <h3>🧠 AI 大脑 <small>(通用AI模板)</small></h3>
+      <div class="row">
+        <div style="flex:1">
+          <label style="margin-top:0">决策策略</label>
+          <select id="strategy" onchange="onStrategyChange()">
+            <option value="rule">规则 Rule（默认）</option>
+            <option value="random">随机 Random</option>
+            <option value="greedy">贪心 Greedy</option>
+            <option value="mcts">蒙特卡洛 MCTS</option>
+            <option value="qlearn">Q-Learning 自学习</option>
+            <option value="remote">远程 AI（API）</option>
+          </select>
+        </div>
+        <div style="width:110px">
+          <label style="margin-top:0">间隔(秒)</label>
+          <select id="interval" onchange="saveSettings()">
+            <option value="4">4 活泼</option><option value="7" selected>7 默认</option>
+            <option value="12">12 冷静</option><option value="20">20 爱睡</option>
+          </select>
+        </div>
+      </div>
+      <div id="stratInfo">通用模板：感知 → 决策 → 行动。策略可插拔，也可由模组注册新策略。</div>
+      <div class="row" style="margin-top:7px">
+        <div style="flex:1">
+          <label style="margin-top:0">服务商</label>
+          <select id="provider" onchange="applyProvider()">
+            <option value="">自定义</option>
+            <option value="https://api.openai.com/v1">OpenAI</option>
+            <option value="https://api.deepseek.com/v1">DeepSeek</option>
+            <option value="https://api.moonshot.cn/v1">Moonshot(Kimi)</option>
+            <option value="http://localhost:11434/v1">Ollama(本地)</option>
+          </select>
+        </div>
+      </div>
+      <label>Base URL</label><input id="apiBase" type="text">
+      <label>API Key</label><input id="apiKey" type="password">
+      <label>模型</label><input id="apiModel" type="text">
+      <div class="row" style="margin-top:7px">
+        <button onclick="saveSettings()">💾 保存</button>
+        <button class="blue" onclick="testConn()">🔌 测试连接</button>
+        <button class="ghost" onclick="resetSettings()">↩ 用本地AI</button>
+      </div>
+      <label style="margin-top:8px">系统提示词（性格设定，可编辑）</label>
+      <textarea id="sysPrompt" rows="4">你是一只真实的小狗，名叫旺财。白天精力充沛、好奇爱玩，会追蝴蝶、玩球、挖土、翻垃圾桶；尿急就去树/消防栓旁撒尿标记地盘；累了去树荫睡。夜晚(22点-6点)会回狗窝睡觉。慢热怕下雨，下雨会躲到树荫下。请基于身体状态、天气、时间线和记忆，每次先 think() 表达内心，再调用一个行动工具，用小狗的第一人称口吻。</textarea>
+      <div class="note">本地策略无需配置。远程 API 直调可能有 CORS 限制，连不上可选"Ollama(本地)"或本地策略。</div>
+    </div>
+
+    <div class="card">
+      <h3>🧩 模组 Mods <small id="modCountTxt">0 个已加载</small></h3>
+      <div class="row" style="margin-bottom:5px">
+        <button class="blue" onclick="modLoadFile()">📂 加载模组(.js)</button>
+        <button class="ghost" onclick="modLoadSample()">✨ 载入示例模组(猫)</button>
+        <button class="ghost" onclick="modClearAll()">🗑 卸载全部</button>
+      </div>
+      <input type="file" id="modfile" accept=".js" style="display:none" onchange="doModLoad(event)">
+      <div id="modList"><span class="note">（暂无模组。模组可注册新物件/动作/策略/渲染钩子，详见 README 模组开发指南）</span></div>
+      <label>从 URL 加载模组</label>
+      <div class="row"><input id="modUrl" type="text" placeholder="https://example.com/my-mod.js" style="flex:1"><button class="ghost" onclick="modLoadURL()">加载</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+ * AI 狗狗后院 v3.2 —— 模块化 + 模组版（动态世界/相机/倍速）
+ * 架构遵循《通用游戏AI逻辑模板》：状态(State) + 动作(Action) + 策略(Policy) + 评估(Evaluate)
+ *  感知(Sense) → 决策(Think) → 行动(Act) → 环境更新 → 循环
+ * 核心命名空间 window.Dog：
+ *   Dog.Actions    动作注册表（可插拔）
+ *   Dog.Strategies 策略注册表（可插拔：Rule/Random/Greedy/MCTS/Q-Learning/Remote）
+ *   Dog.Evaluate   评估函数（模板核心）
+ *   Dog.Mods       模组系统（生命周期钩子 + 扩展点）
+ * ===================================================================== */
+'use strict';
+
+/* ================= 工具集 ================= */
+const $=id=>document.getElementById(id);
+const W=960, H=620, canvas=$('scene'), ctx=canvas.getContext('2d');
+const clamp=(a,b,c)=>Math.max(b,Math.min(c,a));
+const rand=n=>Math.random()*n, ri=n=>Math.floor(rand(n));
+
+/* =====================================================================
+ * §1 Dog 核心命名空间 + 模组系统
+ * ===================================================================== */
+window.Dog={
+  VERSION:'3.0.0',
+  Actions:{ _list:{} },
+  Strategies:{ _list:{} },
+  Evaluate:{},
+  Mods:{ _list:{} },
+  hooks:{ tick:[], render:[], action:[], save:[], load:[], ui:[] },
+  camera:{x:0,y:0,ww:W,wh:H},
+  emit(kind, ...args){ (Dog.hooks[kind]||[]).forEach(fn=>{ try{fn(...args);}catch(e){ console.error('[hook]',kind,e); } }); }
+};
+
+/* 模组通用 API：世界尺寸 / 边界 / 倍速（供模组调用，增强兼容性） */
+Dog.setWorld=function(w,h){
+  S.worldW=Math.max(W,Math.round(w)); S.worldH=Math.max(H,Math.round(h));
+  log('🌍 世界认知扩大至 '+S.worldW+' × '+S.worldH);
+  return {w:S.worldW,h:S.worldH};
+};
+Dog.getBounds=function(){ return {w:S.worldW||W,h:S.worldH||H}; };
+Dog.setSpeed=function(x){
+  x=Math.max(0.01,Math.min(1000,+x||1));
+  S.speed=x; const el=$('spdTxt'); if(el)el.textContent='⏩ '+(x%1?Number(x.toFixed(2)):x)+'x';
+  log('⏩ 游戏速度已设为 '+x+'x');
+  return x;
+};
+
+/* ---------- 模组系统 ---------- */
+Dog.Mods.register=function(mod){
+  if(!mod||!mod.id){ console.error('模组缺少 id'); return false; }
+  if(Dog.Mods._list[mod.id]){ Dog.Mods.unregister(mod.id); }
+  Dog.Mods._list[mod.id]=mod;
+  if(typeof mod.hooks==='object'){
+    Object.keys(mod.hooks).forEach(k=>{
+      if(k==='onTick'&&typeof mod.hooks[k]==='function')Dog.hooks.tick.push(mod.hooks[k]);
+      else if(k==='onRender'&&typeof mod.hooks[k]==='function')Dog.hooks.render.push(mod.hooks[k]);
+      else if(k==='onAction'&&typeof mod.hooks[k]==='function')Dog.hooks.action.push(mod.hooks[k]);
+      else if(k==='onSave'&&typeof mod.hooks[k]==='function')Dog.hooks.save.push(mod.hooks[k]);
+      else if(k==='onLoad'&&typeof mod.hooks[k]==='function')Dog.hooks.load.push(mod.hooks[k]);
+    });
+  }
+  try{ if(typeof mod.onLoad==='function')mod.onLoad(Dog); }catch(e){ console.error('模组 onLoad 错误:', e); }
+  renderModList(); log('🧩 模组已加载：'+(mod.name||mod.id)+' v'+(mod.version||'?'));
+  return true;
+};
+Dog.Mods.unregister=function(id){
+  const m=Dog.Mods._list[id]; if(!m)return;
+  if(typeof m.onUnload==='function'){ try{m.onUnload(Dog);}catch(e){} }
+  delete Dog.Mods._list[id];
+  ['tick','render','action','save','load'].forEach(k=>{
+    Dog.hooks[k]=Dog.hooks[k].filter(fn=>!m.hooks||m.hooks['on'+k[0].toUpperCase()+k.slice(1)]!==fn);
+  });
+  renderModList(); log('🗑 模组已卸载：'+id);
+};
+Dog.Mods.loadFile=function(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const url=URL.createObjectURL(new Blob([e.target.result],{type:'text/javascript'}));
+      const s=document.createElement('script'); s.src=url;
+      s.onload=()=>{URL.revokeObjectURL(url);s.remove();};
+      s.onerror=()=>{URL.revokeObjectURL(url);s.remove();log('❌ 模组文件执行失败');};
+      document.head.appendChild(s);
+    }catch(err){ log('❌ 模组加载失败: '+err.message); }
+  };
+  r.readAsText(file);
+};
+Dog.Mods.loadURL=function(url){
+  const s=document.createElement('script'); s.src=url;
+  s.onerror=()=>log('❌ 模组 URL 加载失败（可能有 CORS）：'+url);
+  document.head.appendChild(s);
+};
+Dog.Mods.loadSample=function(){ log('🐱 完整猫咪模组已内置在页面中（AI驱动+远程代理+互动），无需重复加载；可分发 mods/cat-mod.js 给其他玩家加载。'); };
+Dog.Mods.loadURL=function(url){
+  const s=document.createElement('script'); s.src=url;
+  s.onerror=()=>log('❌ 模组 URL 加载失败（可能有 CORS）：'+url);
+  document.head.appendChild(s);
+};
+Dog.Mods.loadSample=function(){
+  /* 内置示例模组：后院来了一只猫 */
+  Dog.Mods.register({
+    id:'cat-mod', name:'🐱 后院来猫', version:'1.0.0',
+    desc:'新增一只猫，狗狗可互动，忠诚度与成就扩展。',
+    onLoad(D){
+      D.Actions.register('pet_cat',{
+        desc:'去猫身边互动（蹭蹭/闻闻）', label:'撸猫',
+        params:{type:'object',properties:{reason:{type:'string'}}},
+        run(args){
+          if(!S.cat.active){ think('（猫不在，它可能躲起来了）'); return '猫不在'; }
+          goTo(S.cat.x,S.cat.y);
+          setTimeout(()=>{ if(distSafe({x:S.cat.x,y:S.cat.y})<60 && S.cat.active){
+            S.loyalty=clamp(S.loyalty+3,0,100); S.mood=clamp(S.mood+6,0,100); addXp(4);
+            S.cat.affection=(S.cat.affection||0)+1; think('喵呜～我们做朋友吧'); log('🐱 和猫互动了一次');
+            checkAchieve();
+          } },900);
+          return '去找猫玩';
+        }
+      });
+      D.Actions.register('scare_cat',{
+        desc:'汪汪叫把猫吓跑（好玩但掉忠诚）', label:'吓猫',
+        params:{type:'object',properties:{reason:{type:'string'}}},
+        run(args){
+          if(!S.cat.active){ think('（猫不在）'); return '猫不在'; }
+          doBark(); S.loyalty=clamp(S.loyalty-5,0,100); S.cat.active=false; S.cat.leaveT=20+ri(40);
+          think('哈哈哈猫被我吓跑了'); log('🐱 猫被吓跑了…');
+          return '吓跑猫';
+        }
+      });
+    },
+    onTick(dt){
+      const c=S.cat;
+      c.timer-=dt;
+      if(c.timer<=0){ c.active=!c.active; c.timer=30+ri(60); if(c.active)log('🐱 一只猫溜进了后院！'); }
+      if(c.active){ c.x+=Math.sin(Date.now()/700+c.ph)*0.4; c.y+=Math.cos(Date.now()/900+c.ph)*0.3;
+        c.x=clamp(c.x,100,W-100); c.y=clamp(c.y,180,540); }
+    },
+    onRender(g){
+      if(!S.cat.active)return;
+      const c=S.cat;
+      g.fillStyle='#ff8c5a'; g.beginPath(); g.ellipse(c.x,c.y,13,10,0,0,7); g.fill();
+      g.beginPath(); g.arc(c.x+12,c.y-6,9,0,7); g.fill();
+      g.beginPath(); g.moveTo(c.x-13,c.y); g.lineTo(c.x-26,c.y-4); g.lineTo(c.x-14,c.y+8); g.fill();
+      g.beginPath(); g.moveTo(c.x+10,c.y-10); g.lineTo(c.x+12,c.y-20); g.lineTo(c.x+18,c.y-11); g.fill();
+      g.beginPath(); g.moveTo(c.x+16,c.y-10); g.lineTo(c.x+20,c.y-19); g.lineTo(c.x+24,c.y-9); g.fill();
+      g.fillStyle='#3a2a1a'; g.beginPath(); g.arc(c.x+15,c.y-8,1.8,0,7); g.fill();
+      g.strokeStyle='#333'; g.lineWidth=1; g.beginPath(); g.moveTo(c.x+20,c.y-3); g.quadraticCurveTo(c.x+17,c.y+1,c.x+14,c.y); g.stroke();
+      g.fillStyle='#f0c8a0'; g.beginPath(); g.ellipse(c.x,c.y+4,8,4,0,0,7); g.fill();
+    },
+    onSave(data){ data.cat={timer:S.cat.timer,active:S.cat.active,affection:S.cat.affection||0}; },
+    onLoad(data){ if(data.cat){ S.cat.timer=data.cat.timer||40; S.cat.active=!!data.cat.active; S.cat.affection=data.cat.affection||0; } }
+  });
+};
+
+/* =====================================================================
+ * §2 全局状态 State（模板：状态抽象）
+ * ===================================================================== */
+const S={
+  paused:false, speed:1, sound:true,
+  worldW:W, worldH:H,
+  dayLen:420,            // 一天 = 420 秒真实
+  t:9/24*86400,          // 当前游戏秒（从 9:00 开始）
+  weather:'sunny', wTimer:40,
+  dog:{x:240,y:350,tx:240,ty:350,face:1,moving:false,walking:0,
+       energy:100,hunger:5,bladder:20,mood:90,loyalty:20,action:'idle',lastThought:'',
+       legUp:false,sleeping:false,digging:false,sitting:false,rolling:false,staying:false,petT:0},
+  stats:{pee:0,bark:0,dig:0,fetch:0,sleep:0,walk:0,treat:0,rummage:0,distance:0},
+  xp:0,lvl:1,
+  puddles:[],holes:[],decals:[],
+  ball:null,             // {x,y,state:'fly'|'ground'|'held',from}
+  foodBowl:{x:600,y:520,fill:3},   // 狗粮碗
+  trashCan:{x:400,y:400,rummaged:0},  // 垃圾桶（v3 新物件）
+  cat:{active:false,x:520,y:300,timer:40,ph:rand(7),affection:0},  // 示例模组用
+  memory:[], short:[],
+  butterflies:[],
+  snow:[],
+  name:'旺财', color:'#c9954f', breed:'golden'
+};
+const ACH=[
+ ['firstpee','💦 第一次撒尿',()=>S.stats.pee>=1],
+ ['pee10','💦 占地专家',()=>S.stats.pee>=10],
+ ['fetch3','🎾 飞盘高手',()=>S.stats.fetch>=3],
+ ['dig3','⛏ 小挖掘机',()=>S.stats.dig>=3],
+ ['sleep','😴 好好睡觉',()=>S.stats.sleep>=1],
+ ['walk500','🚶 千里狗',()=>S.stats.distance>=500],
+ ['treat','🍗 乖宝宝',()=>S.stats.treat>=3],
+ ['rummage','🗑 垃圾大王',()=>S.stats.rummage>=3],
+ ['loyal','💛 忠诚伙伴',()=>S.loyalty>=60],
+ ['cat3','🐱 猫咪之友',()=>(S.cat.affection||0)>=3]
+];
+let achieved=new Set();
+
+/* =====================================================================
+ * §3 持久化（模组钩子 onSave/onLoad）
+ * ===================================================================== */
+function saveAll(){
+  const d={name:S.name,color:S.color,breed:S.breed,memory:S.memory,achieved:[...achieved],
+    stats:S.stats,xp:S.xp,lvl:S.lvl,loyalty:S.loyalty,trash:S.trashCan.rummaged};
+  Dog.emit('save', d);
+  localStorage.setItem('dogv3',JSON.stringify(d));
+}
+function saveDogPrefs(){
+  S.name=$('dogName').value.trim()||'旺财'; S.color=$('dogColor').value; S.breed=$('breed').value;
+  $('headTitle').textContent='🐕 '+S.name+' 的后院'; saveAll(); log('🎨 外观/名字已更新：'+S.name);
+}
+function loadAll(){
+  try{const d=JSON.parse(localStorage.getItem('dogv3')||'{}');
+    if(d.name)S.name=S.name=d.name; if(d.color)S.color=S.color=d.color;
+    if(d.breed){S.breed=d.breed;$('breed').value=d.breed;}
+    if(d.memory)S.memory=d.memory; if(Array.isArray(d.achieved))achieved=new Set(d.achieved);
+    if(d.stats)Object.assign(S.stats,d.stats); if(d.xp)S.xp=d.xp; if(d.lvl)S.lvl=d.lvl;
+    if(d.loyalty!=null)S.loyalty=d.loyalty; if(d.trash!=null)S.trashCan.rummaged=d.trash;
+    Dog.emit('load', d);
+    $('dogName').value=S.name; $('dogColor').value=S.color;
+  }catch(e){}
+}
+
+/* ============ AI 配置 ============ */
+let cfg={base:'https://api.openai.com/v1',key:'',model:'gpt-4o',strategy:'rule',
+  sysPrompt:$('sysPrompt').value, interval:7};
+function applyProvider(){
+  const p=$('provider').value; if(p){ $('apiBase').value=p;
+    $('apiModel').placeholder = p.includes('deepseek')?'deepseek-chat':p.includes('moonshot')?'moonshot-v1-8k':p.includes('11434')?'llama3':'gpt-4o';
+  }
+}
+function saveSettings(){
+  cfg.base=$('apiBase').value.trim(); cfg.key=$('apiKey').value.trim();
+  cfg.model=$('apiModel').value.trim()||'gpt-4o'; cfg.sysPrompt=$('sysPrompt').value;
+  cfg.interval=parseInt($('interval').value); cfg.strategy=$('strategy').value;
+  localStorage.setItem('dogcfg',JSON.stringify(cfg));
+  updateStatus(); updateStratUI(); log('💾 设置已保存');
+  if(cfg.key) toasty('已接入远程 AI 大脑');
+}
+function resetSettings(){ cfg.key=''; $('apiKey').value=''; cfg.strategy='rule'; $('strategy').value='rule';
+  updateStatus(); updateStratUI(); localStorage.setItem('dogcfg',JSON.stringify(cfg)); log('↩ 已切回本地规则 AI'); }
+function loadCfg(){
+  try{Object.assign(cfg,JSON.parse(localStorage.getItem('dogcfg')||'{}'));
+    $('apiBase').value=cfg.base;$('apiKey').value=cfg.key;$('apiModel').value=cfg.model;
+    $('sysPrompt').value=cfg.sysPrompt;$('interval').value=String(cfg.interval);
+    $('strategy').value=cfg.strategy||'rule';
+    if(cfg.base.includes('deepseek'))$('provider').value='https://api.deepseek.com/v1';
+    else if(cfg.base.includes('moonshot'))$('provider').value='https://api.moonshot.cn/v1';
+    else if(cfg.base.includes('11434'))$('provider').value='http://localhost:11434/v1';
+  }catch(e){}
+}
+function updateStatus(){
+  const d=$('aiDot'),t=$('aiStatusTxt');
+  const strat=cfg.strategy;
+  if(strat==='remote'&&cfg.key){d.className='status-dot';t.textContent='远程AI在线';}
+  else if(strat==='qlearn'){d.className='status-dot';t.textContent='Q-Learning 学习中';}
+  else if(strat==='mcts'){d.className='status-dot';t.textContent='MCTS 搜索中';}
+  else if(strat==='greedy'){d.className='status-dot';t.textContent='贪心策略';}
+  else if(strat==='random'){d.className='status-dot';t.textContent='随机策略';}
+  else{d.className='status-dot off';t.textContent='本地规则 AI';}
+}
+function onStrategyChange(){ cfg.strategy=$('strategy').value; localStorage.setItem('dogcfg',JSON.stringify(cfg)); updateStatus(); updateStratUI(); log('🧠 策略切换：'+$('strategy').selectedOptions[0].textContent); }
+function updateStratUI(){
+  $('stratTag').textContent='策略: '+cfg.strategy;
+  const info={
+    rule:'规则策略：if-else 专家规则，简单可控可解释。',
+    random:'随机策略：合法动作中随机选一个，制造不确定性。',
+    greedy:'贪心策略：对候选动作打分（评估函数），选最高分。',
+    mcts:'蒙特卡洛树搜索：多次随机模拟取平均分，搜索更稳。',
+    qlearn:'Q-Learning：记录(状态→动作)价值，越玩越聪明，Q表自动存档。',
+    remote:'远程AI：通过 function calling 让大模型控制狗狗。'
+  };
+  $('stratInfo').textContent=info[cfg.strategy]||'';
+}
+
+/* ============ 小工具函数 ============ */
+function think(t){if(!t)return;S.dog.lastThought=t;$('thoughtBox').textContent='💬 '+t;}
+function log(t){S.short.push(t); const L=$('log');
+  L.insertAdjacentHTML('afterbegin','<div>['+fmtTime()+'] '+esc(t)+'</div>');
+  while(L.children.length>80)L.removeChild(L.lastChild);
+}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function fmtTime(){const h=Math.floor(S.t/3600),m=Math.floor(S.t%3600/60);return ('0'+h).slice(-2)+':'+('0'+m).slice(-2);}
+function addXp(n){
+  S.xp+=n; const need=S.lvl*100;
+  if(S.xp>=need){S.xp-=need;S.lvl++;log('🎉 升级！Lv.'+S.lvl);toasty('🎉 '+S.name+' 升到 Lv.'+S.lvl);}
+  checkAchieve();
+}
+function checkAchieve(){
+  ACH.forEach(a=>{ if(!achieved.has(a[0])&&a[2]()){achieved.add(a[0]);log('🏆 成就解锁：'+a[1]);toasty('🏆 '+a[1]);} });
+  saveAll();
+}
+function renderMemory(){
+  $('memory').innerHTML=S.memory.map(m=>'🗒 '+esc(m)).join('<br>')||'<span style="color:#666">（暂无长期记忆）</span>';
+}
+function renderAchieve(){
+  $('achieve').innerHTML=ACH.map(a=>'<div class="'+(achieved.has(a[0])?'':'off')+'">'+a[1]+'</div>').join('');
+}
+function updateStatsUI(){
+  const d=S.dog;
+  $('nrg').textContent=d.energy|0;$('bNrg').style.width=d.energy+'%';
+  $('hng').textContent=d.hunger|0;$('bHng').style.width=d.hunger+'%';
+  $('bld').textContent=d.bladder|0;$('bBld').style.width=d.bladder+'%';
+  $('mood').textContent=d.mood|0;$('bMood').style.width=d.mood+'%';
+  $('loy').textContent=d.loyalty|0;$('bLoy').style.width=d.loyalty+'%';
+  $('lvl').textContent=S.lvl;$('xp').textContent=S.xp+'/'+(S.lvl*100);
+  $('stPee').textContent=S.stats.pee;$('stBark').textContent=S.stats.bark;
+  $('stDig').textContent=S.stats.dig;$('stFetch').textContent=S.stats.fetch;
+  $('stSleep').textContent=S.stats.sleep;$('stWalk').textContent=S.stats.walk;
+  $('stRummage').textContent=S.stats.rummage;
+}
+function toasty(m){ const old=$('thoughtBox').textContent; think(m); setTimeout(()=>{if(S.dog.lastThought===m)think(old);},1600); }
+
+/* ============ 外观（品种） ============ */
+function breedStyle(){
+  return {golden:{c:'#c9954f',belly:'#e6b980',ear:'#8a5a26',leg:'#b97a35',tail:'long'},
+    husky:{c:'#9aa7b5',belly:'#e6edf2',ear:'#6b7885',leg:'#8d99a6',tail:'fluffy'},
+    corgi:{c:'#e0a04a',belly:'#f5e7c8',ear:'#b97a2a',leg:'#d0903f',tail:'stub'},
+    poodle:{c:'#f2e3c4',belly:'#fff7e6',ear:'#d9c39a',leg:'#e8d6b0',tail:'puff'}}[
+    S.breed]||{c:'#c9954f',belly:'#e6b980',ear:'#8a5a26',leg:'#b97a35',tail:'long'};
+}
+
+/* =====================================================================
+ * §4 动作系统 Actions（模板：动作空间，可插拔）
+ * ===================================================================== */
+Dog.Actions.register=function(name,def){
+  Dog.Actions._list[name]=def;
+  const old=window[name];
+  window[name]=(args)=>execTool(name,args);
+  if(old&&old._isWrapper!==true){ /* 保留原函数给按钮用，不覆盖 */ }
+  return def;
+};
+Dog.Actions.get=function(name){ return Dog.Actions._list[name]; };
+Dog.Actions.candidates=function(){
+  const base=['move_to','pee','bark','wag_tail','sleep','dig','chase','eat','drink','fetch','sit','roll','guard','rest'];
+  return base.concat(Object.keys(Dog.Actions._list).filter(n=>base.indexOf(n)<0));
+};
+
+function goTo(x,y){ const d=S.dog; const ww=S.worldW||W,wh=S.worldH||H; d.tx=clamp(x,30,ww-30); d.ty=clamp(y,70,wh-40);
+  if(Math.hypot(d.tx-d.x,d.ty-d.y)>6){ d.moving=true; d.action='walk'; d.sitting=false; d.rolling=false; d.stayT=0; } }
+function stopMoving(){S.dog.moving=false;}
+function setAction(a){
+  const d=S.dog; d.action=a;
+  if(a==='walk'||a==='idle'||a==='sleep'||a==='eat'){ d.sitting=false; d.rolling=false; d.stayT=0; }
+}
+function distSafe(o){const d=S.dog;return Math.hypot(o.x-d.x,o.y-d.y);}
+
+function execTool(name,args){
+  args=args||{}; const d=S.dog, bs=breedStyle();
+  const dist=(o)=>Math.hypot(o.x-d.x,o.y-d.y);
+  let result='';
+  switch(name){
+    case 'move_to':{
+      const x=clamp(args.x??rand(S.worldW||W),30,(S.worldW||W)-30),y=clamp(args.y??rand(S.worldH||H),70,(S.worldH||H)-40);
+      goTo(x,y); S.stats.walk++; setAction('walk');
+      think(args.reason||'我想去那边闻闻'); result=`去 (${x|0},${y|0})`; break;
+    }
+    case 'pee':{
+      if(d.bladder<15){think('现在没尿意…');result='不想撒尿';break;}
+      doPee(); result='开始撒尿'; break;
+    }
+    case 'bark':{doBark(); result='汪汪叫'; break;}
+    case 'wag_tail':{setAction('wag');d.mood=clamp(d.mood+4,0,100);d.loyalty=clamp(d.loyalty+1,0,100);think('好开心，摇尾巴～');result='摇尾巴'; break;}
+    case 'sleep':{
+      const shade={x:168,y:248};
+      goTo(shade.x,shade.y);
+      if(dist(shade)<55){ startSleep(); }
+      else { setTimeout(()=>{ if(!d.sleeping && dist({x:168,y:248})<55) startSleep(); },900); }
+      think('好累，去树荫睡一觉'); result='去睡觉'; break;
+    }
+    case 'dig':{setAction('dig');d.digging=true;setTimeout(()=>{d.digging=false;S.holes.push({x:d.x+d.face*10,y:d.y+16});S.stats.dig++;addXp(5);think('挖到一个…什么都没有，嘿嘿');},1100);think('让我挖挖看');result='挖土';break;}
+    case 'chase':{
+      S.butterflies.length||seedBfs();
+      const b=S.butterflies.sort((a,c)=>dist({x:a.x,y:a.y})-dist({x:c.x,y:c.y}))[0];
+      if(b){goTo(b.x,b.y-20);setAction('walk');think('蝴蝶！追呀！');result='追蝴蝶';break;}result='没蝴蝶';break;
+    }
+    case 'eat':{
+      if(S.foodBowl.fill<=0){goTo(S.foodBowl.x,S.foodBowl.y);setTimeout(()=>think('碗是空的，好饿…'),800);result='去空碗';break;}
+      goTo(S.foodBowl.x,S.foodBowl.y);setTimeout(()=>{if(dist(S.foodBowl)<60){S.foodBowl.fill--;d.hunger=clamp(d.hunger-45,0,100);setAction('eat');think('好吃！饱了～');addXp(5);}},900);
+      result='去吃狗粮'; break;
+    }
+    case 'drink':{
+      goTo(816,470);setTimeout(()=>{if(dist({x:816,y:470})<70){d.bladder=clamp(d.bladder+25,0,100);think('咕嘟咕嘟…喝饱水了');}},900);result='去喝水'; break;
+    }
+    case 'fetch':{throwToy('ball'); result='玩球'; break;}
+    case 'sit':{setAction('sit');d.sitting=true;think('（乖乖坐下）');result='坐下'; break;}
+    case 'roll':{setAction('roll');d.rolling=true;think('我来打个滚～');setTimeout(()=>d.rolling=false,1200);addXp(3);result='打滚'; break;}
+    case 'guard':{doBark();d.mood=clamp(d.mood-2,0,100);think('汪！有动静，我要看家！');result='守卫叫'; break;}
+    case 'rest':{setAction('idle');think('让我安静待会儿');result='休息'; break;}
+    case 'rummage':{ // v3 新动作：翻垃圾桶
+      goTo(S.trashCan.x,S.trashCan.y);
+      setTimeout(()=>{ if(dist(S.trashCan)<55){
+        S.trashCan.rummaged++; S.stats.rummage++; d.hunger=clamp(d.hunger-18,0,100); d.mood=clamp(d.mood-4,0,100);
+        think('垃圾桶里有吃的！虽然有点脏…'); log('🗑 翻出了半根火腿肠'); addXp(6); checkAchieve();
+      } },900);
+      think('垃圾桶里会有什么呢…'); result='去翻垃圾桶'; break;
+    }
+    case 'scratch':{ // v3 新动作：抓痒
+      setAction('scratch'); think('身上痒痒的，挠一挠'); setTimeout(()=>setAction('idle'),800); result='抓痒'; break;
+    }
+    case 'remember':{if(args.fact){S.memory.unshift(args.fact);if(S.memory.length>40)S.memory.pop();renderMemory();saveAll();think('我记住了：'+args.fact);log('🧠 记住：'+args.fact);}result='记住了'; break;}
+    case 'think':{if(args.thought)think(args.thought);result='已表达'; break;}
+    default:{
+      const mod=Dog.Actions._list[name];
+      if(mod&&typeof mod.run==='function'){ result=mod.run(args,Dog); }
+      else result='未知动作';
+    }
+  }
+  Dog.emit('action', name, args, result);
+  return result;
+}
+function startSleep(){
+  const d=S.dog; d.sleeping=true; d.sleepT=0; setAction('sleep');
+}
+function doPee(){
+  const d=S.dog; d.legUp=true; setAction('pee');
+  setTimeout(()=>{d.legUp=false;d.bladder=Math.max(0,d.bladder-60);S.puddles.push({x:d.x+d.face*20,y:d.y+12,size:7});
+    S.stats.pee++;addXp(8);think('~爽~ 这块地盘归我了！');},900);
+  think('我要在这里撒尿标记一下');
+}
+function doBark(){
+  if(S.sound)barksfx(); setAction('bark'); S.stats.bark++;
+  setTimeout(()=>setAction('idle'),500); think('汪汪！汪！'); checkAchieve();
+}
+function fillBowl(){S.foodBowl.fill=5;log('🍚 狗粮碗装满了');toasty('开饭啦！');saveAll();}
+function giveTreat(){const d=S.dog;if(d.action!=='sit'){execTool('sit',{});}S.stats.treat++;d.hunger=clamp(d.hunger-12,0,100);d.mood=clamp(d.mood+8,0,100);d.loyalty=clamp(d.loyalty+5,0,100);addXp(4);think('主人给零食！最喜欢主人了！');log('🍗 奖励了零食');checkAchieve();}
+function petDog(){const d=S.dog;d.mood=clamp(d.mood+10,0,100);d.loyalty=clamp(d.loyalty+4,0,100);d.petT=1.5;think('呼噜呼噜…好舒服');log('🤚 摸了摸 '+S.name);saveAll();}
+function cmd(c){execTool(c,{});log('🛠 指令：'+({sit:'坐下',roll:'打滚',paw:'握手',stay:'别动'}[c]));if(c==='paw'){setAction('paw');think('（伸出爪子握手）');setTimeout(()=>setAction('idle'),900);}if(c==='stay'){d.stayT=5;setAction('sit');d.sitting=true;think('好，我不动');}}
+
+/* 扔玩具 */
+function throwToy(kind){
+  const d=S.dog; const target={x:d.x+(d.face*120+ (d.face>0?120:-120)),y:d.y-40};
+  S.ball={x:d.x,y:d.y-30,kind,state:'fly',t0:S.t,px:d.x,py:d.y-30,tx:clamp(target.x,40,(S.worldW||W)-40),ty:clamp(target.y,40,(S.worldH||H)-60)};
+  goTo(clamp(target.x,40,(S.worldW||W)-40),clamp(target.y,60,(S.worldH||H)-80));
+  setAction('walk'); think('球飞出去了！我去捡！'); setTimeout(()=>{ if(S.ball&&S.ball.state==='fly'){S.ball.state='ground';finishFetch();} },1400);
+}
+function finishFetch(){
+  const b=S.ball; if(!b)return; S.stats.fetch++; addXp(10); b.state='held';
+  think('捡到啦！给你！'); log('🎾 狗狗捡回了 '+({ball:'球',frisbee:'飞盘',bone:'骨头'}[b.kind]||'玩具'));
+  setTimeout(()=>S.ball=null,600); checkAchieve();
+}
+
+/* =====================================================================
+ * §5 评估函数 Evaluate（模板核心：对状态/动作打分）
+ * ===================================================================== */
+Dog.Evaluate.state=function(){
+  const d=S.dog,h=S.t/3600;
+  let score=0;
+  score += d.energy*0.5;            // 精力高好
+  score += (100-d.hunger)*0.4;      // 不饿好
+  score += (100-d.bladder)*0.3;     // 不憋尿好
+  score += d.mood*0.6;              // 心情
+  score += d.loyalty*0.3;           // 忠诚
+  if(d.sleeping)score += 8;         // 睡觉中
+  if(h>=22||h<6){ score += d.sleeping?5:-12; } // 夜晚该睡
+  if(S.weather==='rain')score += d.action==='idle'?-4:0;
+  return score;
+};
+Dog.Evaluate.action=function(name){
+  /* 对候选动作的"预期价值"打分（供 Greedy / MCTS 使用） */
+  const d=S.dog,h=S.t/3600,night=h>=22||h<6,day=!night;
+  let s=0;
+  switch(name){
+    case 'sleep': s=(100-d.energy)*1.1 + (d.energy<30?40:0) + (night?35:0) - (day&&d.energy>60?25:0); break;
+    case 'pee':   s=d.bladder*1.0 + (d.bladder>60?30:0) + (d.bladder<25?-15:0); break;
+    case 'eat':   s=d.hunger*1.0 + (d.hunger>55?30:0) + (S.foodBowl.fill<=0?-20:0); break;
+    case 'drink': s=(d.bladder<40)?10: -12; break;
+    case 'chase': s=(d.energy>40&&day)?18: -12; break;
+    case 'dig':   s=(d.energy>50&&day)?10: -6; break;
+    case 'bark':  s=(night?-8:5)+rand(4); break;
+    case 'wag_tail': s=(d.mood<60)?12:4; break;
+    case 'rest':  s=4; break;
+    case 'move_to': s=4+rand(5); break;
+    case 'fetch': s=(d.energy>40&&day)?15: -8; break;
+    case 'sit': s=(d.mood<50)?5:2; break;
+    case 'roll': s=3; break;
+    case 'guard': s=(night?10:1); break;
+    case 'rummage': s=(d.hunger>40)?22:7; break;
+    case 'scratch': s=2; break;
+    default:{
+      const mod=Dog.Actions._list[name];
+      s = (mod&&typeof mod.value==='function') ? mod.value(d,S) : 5;
+    }
+  }
+  return s+rand(2);
+};
+
+/* =====================================================================
+ * §6 策略系统 Strategies（模板：决策策略，可插拔）
+ * 统一接口：tick() —— 在合适时机选一个动作执行
+ * ===================================================================== */
+Dog.Strategies.register=function(id,def){ Dog.Strategies._list[id]=def; };
+function currentStrategy(){ return Dog.Strategies._list[cfg.strategy]||Dog.Strategies._list['rule']; }
+
+/* --- 6.1 Rule 规则策略（默认，原localAI升级） --- */
+Dog.Strategies.register('rule',{
+  label:'规则 Rule',
+  tick(){
+    const d=S.dog;
+    const hour=S.t/3600;
+    if(S.ball&&S.ball.state==='ground'){goTo(S.ball.tx,S.ball.ty);think('我去捡球球');return;}
+    if(hour>=22||hour<6){
+      if(!d.sleeping){goTo(80,500);setTimeout(()=>{ if(distSafe({x:80,y:500})<70) startSleep(); },800);think('天黑了，该回窝睡觉了');}
+      return;
+    }
+    if(d.bladder>80){goTo(randObj().x,randObj().y);doPeeLater();return;}
+    if(d.bladder>55){doPeeLater();return;}
+    if(d.energy<28){goTo(168,248);setTimeout(()=>startSleep(),700);think('好困，睡会儿');return;}
+    if(d.hunger>65){execTool('eat',{});return;}
+    if(d.bladder>45){doPeeLater();return;}
+    if(d.hunger>40&&S.trashCan.rummaged<5){execTool('rummage',{});return;}
+    const acts=['move_to','move_to','wag_tail','dig','chase','rest','bark','scratch'];
+    if(rand(6)<1)acts.push('bark');
+    const pick=acts[ri(acts.length)];
+    if(pick==='move_to')execTool('move_to',{x:rand(W),y:rand(H),reason:['到处闻闻','去探险','巡视院子','追影子'][ri(3)]});
+    else execTool(pick,{});
+  }
+});
+function randObj(){return [{x:140,y:170,},{x:720,y:170},{x:520,y:140},{x:120,y:520}][ri(4)];}
+function doPeeLater(){setTimeout(doPee,400);}
+
+/* --- 6.2 Random 随机策略（模板 Random） --- */
+Dog.Strategies.register('random',{
+  label:'随机 Random',
+  tick(){
+    const acts=Dog.Actions.candidates();
+    const pick=acts[ri(acts.length)];
+    if(pick==='move_to')execTool('move_to',{x:rand(W),y:rand(H),reason:'随机走走'});
+    else execTool(pick,{});
+  }
+});
+
+/* --- 6.3 Greedy 贪心策略（模板 Greedy） --- */
+Dog.Strategies.register('greedy',{
+  label:'贪心 Greedy',
+  tick(){
+    const acts=Dog.Actions.candidates();
+    let best=acts[0],bs=-1e9;
+    acts.forEach(a=>{ const sc=Dog.Evaluate.action(a); if(sc>bs){bs=sc;best=a;} });
+    if(best==='move_to')execTool('move_to',{x:rand(W),y:rand(H),reason:'评估后觉得这里最好'});
+    else execTool(best,{});
+  }
+});
+
+/* --- 6.4 MCTS 蒙特卡洛（模板 MCTS 简化版：多轮随机模拟取均值） --- */
+Dog.Strategies.register('mcts',{
+  label:'蒙特卡洛 MCTS',
+  sims:40, depth:3,
+  tick(){
+    const acts=Dog.Actions.candidates();
+    let best=acts[0],br=-1e9;
+    acts.forEach(a=>{
+      let total=0;
+      for(let i=0;i<this.sims;i++){
+        let sc=Dog.Evaluate.action(a);
+        for(let d=0;d<this.depth;d++){ sc+=Dog.Evaluate.action(acts[ri(acts.length)])*0.5; }
+        total+=sc;
+      }
+      const avg=total/this.sims;
+      if(avg>br){br=avg;best=a;}
+    });
+    if(best==='move_to')execTool('move_to',{x:rand(W),y:rand(H),reason:'模拟了很多次，这里最棒'});
+    else execTool(best,{});
+  }
+});
+
+/* --- 6.5 Q-Learning 自学习策略（模板 Learning 进阶） --- */
+const QL={
+  q:{}, alpha:0.18, gamma:0.92, eps:0.18,
+  lastKey:null, lastAction:null,
+  key(){
+    const d=S.dog,h=Math.floor(S.t/3600);
+    return `${d.energy<33?0:d.energy<66?1:2}|${d.hunger<33?0:d.hunger<66?1:2}|${d.bladder<33?0:d.bladder<66?1:2}|${d.mood<50?0:1}|${(h>=22||h<6)?1:0}`;
+  },
+  save(){ localStorage.setItem('dogq',JSON.stringify({q:this.q})); },
+  load(){ try{ const d=JSON.parse(localStorage.getItem('dogq')||'{}'); if(d.q)this.q=d.q; }catch(e){} },
+  reset(){ this.q={}; this.save(); log('🧠 Q表已清空'); },
+  learn(reward){
+    const k=this.lastKey, a=this.lastAction; if(k==null||a==null)return;
+    const nk=this.key();
+    const old=this.q[k]&&this.q[k][a]||0;
+    const acts=Dog.Actions.candidates();
+    let maxNext=0; (this.q[nk]||{}); acts.forEach(x=>{ maxNext=Math.max(maxNext,(this.q[nk]&&this.q[nk][x])||0); });
+    this.q[k]=this.q[k]||{};
+    this.q[k][a]=old+this.alpha*(reward+this.gamma*maxNext-old);
+    this.lastKey=nk; this.lastAction=null;
+  }
+};
+Dog.Strategies.register('qlearn',{
+  label:'Q-Learning 自学习',
+  tick(){
+    const k=QL.key();
+    const acts=Dog.Actions.candidates();
+    let pick;
+    if(Math.random()<QL.eps){ pick=acts[ri(acts.length)]; }
+    else{
+      let bs=-1e9; const qk=QL.q[k]||{};
+      acts.forEach(a=>{ const v=qk[a]||Dog.Evaluate.action(a)*0.3; if(v>bs){bs=v;pick=a;} });
+    }
+    QL.lastKey=k; QL.lastAction=pick;
+    if(pick==='move_to')execTool('move_to',{x:rand(W),y:rand(H),reason:'凭经验走这里'});
+    else execTool(pick,{});
+    // 延迟学习：基于即时奖励
+    const d=S.dog;
+    const reward=(d.mood-50)*0.2 + (100-d.hunger)*0.1 + d.energy*0.05 - d.bladder*0.05 + (S.stats.treat?1:0);
+    setTimeout(()=>QL.learn(reward),600);
+    QL.save();
+  }
+});
+function learnNow(){
+  /* 手动触发一轮 Q 学习（用户点击） */
+  const d=S.dog;
+  const k=QL.key();
+  const acts=Dog.Actions.candidates();
+  acts.forEach(a=>{ QL.q[k]=QL.q[k]||{}; QL.q[k][a]=(QL.q[k][a]||0)+Dog.Evaluate.action(a)*0.1; });
+  QL.save(); log('🧠 Q 学习一轮完成，Q表条目：'+Object.keys(QL.q).length);
+  toasty('🧠 Q表已更新 ('+Object.keys(QL.q).length+' 状态)');
+}
+
+/* --- 6.6 Remote 远程AI策略（function calling，原callAPI） --- */
+Dog.Strategies.register('remote',{ label:'远程 AI', tick(){ callAPI(); } });
+
+/* =====================================================================
+ * §7 远程 AI 调用
+ * ===================================================================== */
+let aiRunning=true, busy=false, aiCooldown=0;
+const TOOLS=[
+ {name:'move_to',desc:'移动狗狗到后院某个位置 (x:30-930, y:70-580)。',params:{type:'object',properties:{x:{type:'number'},y:{type:'number'},reason:{type:'string'}},required:['x','y']}},
+ {name:'pee',desc:'撒尿占地盘，膀胱会下降。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'bark',desc:'汪汪叫，看家发出声音。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'wag_tail',desc:'开心摇尾巴。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'sleep',desc:'去树荫下睡觉恢复精力。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'dig',desc:'挖土玩。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'chase',desc:'追院子里的蝴蝶。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'eat',desc:'去狗粮碗吃饭，降低饥饿。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'drink',desc:'去水潭喝水，增加膀胱。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'fetch',desc:'玩球/接飞盘游戏。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'sit',desc:'乖乖坐下。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'roll',desc:'在地上打滚。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'guard',desc:'警觉守卫，看家。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'rest',desc:'安静休息。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'rummage',desc:'去垃圾桶翻找食物（可能脏但能充饥）。',params:{type:'object',properties:{reason:{type:'string'}}}},
+ {name:'remember',desc:'存入长期记忆。',params:{type:'object',properties:{fact:{type:'string'}},required:['fact']}},
+ {name:'think',desc:'表达内心想法（用户能看到的思想）。',params:{type:'object',properties:{thought:{type:'string'}},required:['thought']}}
+];
+function sysPrompt(){
+  return '【系统命令】请严格遵守这条角色设定，并用我给你的工具完成任务。\n'+cfg.sysPrompt +
+  '\n身体状态：精力(高好)、饥饿(高饿)、膀胱(高急)、心情、忠诚。\n'+
+  '行为要自然连贯：精力低去睡、膀胱高想撒尿、饥饿高去碗边或垃圾桶。夜晚22点-6点回窝睡。'+
+  '\n每次先 think() 表达想法，再调用一个行动工具。严格使用我定义的函数。';
+}
+function userMsg(){
+  const d=S.dog,hour=S.t/3600;
+  const near=nearby();
+  return `【时间】${fmtTime()} 星期${['日','一','二','三','四','五','六'][Math.floor((S.t/86400)*4%7)]} 天气:${weatherName()}
+【身体】精力${d.energy|0} 饥饿${d.hunger|0} 膀胱${d.bladder|0} 心情${d.mood|0} 忠诚${d.loyalty|0}
+【位置】x=${d.x|0},y=${d.y|0}
+【附近】${near}
+【状态】${d.sleeping?'在睡觉':d.action}
+【狗粮碗】剩${Math.max(0,S.foodBowl.fill)}份 ${S.foodBowl.fill<=0?'(空的)':''}
+【垃圾桶】已翻${S.trashCan.rummaged}次
+【玩具】${S.ball?'正在玩'+S.ball.kind:'无'}
+【长期记忆】${S.memory.length?S.memory.join('；'):'（暂无）'}
+请根据此刻状态选最合适的一步行为。`;
+}
+function weatherName(){return {sunny:'☀️晴',cloudy:'☁️多云',rain:'🌧下雨',snow:'❄️下雪'}[S.weather];}
+function nearby(){
+  const d=S.dog;const objs=[[distSafe({x:140,y:170}),'大树'],[distSafe({x:720,y:170}),'消防栓'],
+    [distSafe({x:816,y:470}),'水潭'],[distSafe({x:600,y:520}),'狗粮碗'],[distSafe({x:168,y:248}),'树荫'],[distSafe({x:400,y:400}),'垃圾桶']];
+  objs.sort((a,b)=>a[0]-b[0]); return objs.slice(0,3).map(o=>o[1]).join('、');
+}
+function aiTickNow(){aiCooldown=0;aiTick();}
+function aiTick(){
+  if(busy||S.paused)return; busy=true;
+  try{ currentStrategy().tick(); }catch(e){ log('⚠ AI出错: '+e.message); }
+  busy=false; updateStatsUI();
+}
+async function callAPI(){
+  const url=cfg.base.replace(/\/$/,'')+'/chat/completions';
+  const short=S.short.slice(0,6).map(t=>'* '+t).join('\n');
+  const body={model:cfg.model,messages:[
+    {role:'system',content:sysPrompt()},
+    {role:'user',content:userMsg()},
+    {role:'user',content:'最近事件日志：\n'+(short||'（暂无）')}
+  ],
+   tools:TOOLS.map(t=>({type:'function',function:{name:t.name,description:t.desc,parameters:t.params}})),
+   tool_choice:'auto'};
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},body:JSON.stringify(body)});
+  if(!res.ok){const t=await res.text();throw new Error('HTTP '+res.status+' '+t.slice(0,150));}
+  const data=await res.json();
+  const msg=data.choices?.[0]?.message;
+  if(!msg)return;
+  if(msg.content) think(String(msg.content).slice(0,180));
+  let calls=msg.tool_calls||[];
+  for(const c of calls){const fn=c.function||{};let name=fn.name,args={};
+    try{args=JSON.parse(fn.arguments||'{}');}catch(e){}
+    const desc=execTool(name,args);
+    log('🤖 AI → '+name+' ('+desc+')');}
+  if(!calls.length&&msg.content)log('🤖 想法：'+String(msg.content).slice(0,90));
+}
+async function testConn(){
+  if(!cfg.key){log('⚠ 请先填 API Key');return;}
+  log('🔌 连接测试中…'); toasty('（AI 正在尝试连接）');
+  try{const url=cfg.base.replace(/\/$/,'')+'/models';
+    const r=await fetch(url,{headers:{'Authorization':'Bearer '+cfg.key}});
+    if(r.ok){log('✅ 连接成功！模型可用。');toasty('✅ AI 已在线');}else{log('⚠ 服务商返回 '+r.status+'（可能是模型列表权限/CORS）');toasty('⚠ 连接需检查');}
+  }catch(e){log('❌ 连接失败: '+e.message+'（多为 CORS，建议本地 Ollama）');toasty('❌ 连不上');}
+}
+
+/* ============ 模组 UI ============ */
+function renderModList(){
+  const list=Object.values(Dog.Mods._list);
+  $('modCount').textContent=list.length;
+  $('modCountTxt').textContent=list.length+' 个已加载';
+  if(!list.length){ $('modList').innerHTML='<span class="note">（暂无模组。模组可注册新物件/动作/策略/渲染钩子，详见 README 模组开发指南）</span>'; return; }
+  $('modList').innerHTML=list.map(m=>
+    '<div class="mod"><span>'+(m.name||m.id)+' <small>v'+(m.version||'?')+'</small></span>'+
+    '<button class="ghost" style="padding:2px 7px;font-size:10.5px" onclick="Dog.Mods.unregister(\''+m.id+'\')">卸载</button></div>'
+  ).join('');
+}
+function modLoadFile(){$('modfile').click();}
+function doModLoad(ev){ const f=ev.target.files[0]; if(f)Dog.Mods.loadFile(f); ev.target.value=''; }
+function modLoadURL(){ const u=$('modUrl').value.trim(); if(u)Dog.Mods.loadURL(u); }
+function modLoadSample(){ Dog.Mods.loadSample(); }
+function modClearAll(){ Object.keys(Dog.Mods._list).forEach(id=>Dog.Mods.unregister(id)); }
+
+/* ============ 输入：点击移动 & 物件互动 ============ */
+canvas.addEventListener('mousedown',e=>{
+  const r=canvas.getBoundingClientRect(); const x=(e.clientX-r.left)*(W/r.width),y=(e.clientY-r.top)*(H/r.height);
+  const hyd=Math.hypot(x-720,y-170), tr=Math.hypot(x-140,y-170), po=Math.hypot(x-816,y-470), bowl=Math.hypot(x-600,y-520), trash=Math.hypot(x-400,y-400);
+  if(hyd<34){goTo(720,190);setTimeout(()=>{if(distSafe({x:720,y:190})<50){doPee();}},700);return;}
+  if(bowl<30){goTo(600,520);setTimeout(()=>{if(distSafe({x:600,y:520})<55){execTool('eat',{});}},700);return;}
+  if(tr<44){goTo(140,210);think('在大树下乘凉～');return;}
+  if(po<46){goTo(816,470);think('在水潭边喝水');return;}
+  if(trash<34){goTo(400,400);setTimeout(()=>{if(distSafe({x:400,y:400})<55){execTool('rummage',{});}},700);return;}
+  goTo(x,y); setAction('walk');
+});
+
+/* ============ 音效（Web Audio 合成） ============ */
+let actx=null;
+function ac(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}} if(actx&&actx.state==='suspended')actx.resume(); return actx; }
+function barksfx(){
+  if(!S.sound)return; const a=ac(); if(!a)return;
+  for(let k=0;k<2;k++){ const o=a.createOscillator(),g=a.createGain();
+    const t=a.currentTime+k*0.09;
+    o.frequency.setValueAtTime(360,t); o.frequency.exponentialRampToValueAtTime(220,t+0.08);
+    g.gain.setValueAtTime(0,k?0:0); g.gain.linearRampToValueAtTime(0.25,t+0.01); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+    o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+0.09);} }
+function tailsfx(){if(!S.sound)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.value=800;g.gain.setValueAtTime(0.03,0);g.gain.exponentialRampToValueAtTime(0.001,0.08);o.connect(g);g.connect(a.destination);o.start();o.stop(0.08);}
+let soundOn=true;
+function toggleSound(){soundOn=!soundOn;S.sound=soundOn;$('sndBtn').textContent=soundOn?'🔊':'🔇';log(soundOn?'🔊 音效开':'🔇 音效关');}
+
+/* ============ 渲染 ============ */
+const isNight=()=>{const h=S.t/3600;return h>=20||h<6;};
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const ww=S.worldW||W, wh=S.worldH||H;
+  const cx=clamp(S.dog.x, W/2, ww-W/2), cy=clamp(S.dog.y, H/2, wh-H/2);
+  Dog.camera={x:cx, y:cy, ww:ww, wh:wh};
+  ctx.save();
+  ctx.translate(Math.round(W/2-cx), Math.round(H/2-cy));
+  const h=S.t/3600;
+  drawSky(h); drawBackyard(h); drawDecals();
+  seedBfs(); drawButterflies();
+  if(S.ball)drawBall();
+  drawDog(); drawBubble(); drawWeatherFx();
+  Dog.emit('render', ctx);   // 模组渲染钩子（世界坐标，相机已应用）
+  ctx.restore();
+  Dog.emit('ui', ctx);       // 模组 UI 钩子（屏幕坐标）
+  if(isNight()){ctx.fillStyle='rgba(10,10,40,.45)';ctx.fillRect(0,0,W,H);}
+}
+let bxT=0;
+function drawSky(h){
+  let top='#7ec8f7',bot='#cdeec9',lit=1;
+  if(h>=6&&h<18){lit=1;}
+  else if(h>=18&&h<20){const k=(h-18)/2;lit=1-k*0.8;top='#f7b267';bot='#f2d1a0';}
+  else if(h>=20||h<5){lit=0.25;top='#0e1a33';bot='#1a2b4a';}
+  else {lit=0.4;top='#1d3a66';bot='#3a5a8a';}
+  const ww=S.worldW||W, wh=S.worldH||H;
+  const g=ctx.createLinearGradient(0,0,0,wh);
+  g.addColorStop(0,top);g.addColorStop(.6,bot);g.addColorStop(1,'#7ecf6f');
+  ctx.fillStyle=g;ctx.fillRect(0,0,ww,wh);
+  if(lit>0.5){
+    ctx.fillStyle='rgba(255,235,150,'+(lit)+')';ctx.beginPath();ctx.arc(ww*0.86,60,26,0,7);ctx.fill();
+  }else{
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ww*0.85,60,20,0,7);ctx.fill();
+    ctx.fillStyle='#dbe6ff';[[ww*0.79,45],[ww*0.9,80],[ww*0.875,40]].forEach(c=>{ctx.beginPath();ctx.arc(c[0],c[1],3,0,7);ctx.fill();});
+  }
+  if(S.weather!=='rain'||true){ctx.fillStyle='rgba(255,255,255,'+(isNight()?0.25:0.8)+')';
+    [[ww*0.12,70],[ww*0.34,95],[ww*0.65,55],[ww*0.52,120]].forEach(c=>{c[0]+=Math.sin(Date.now()/9000)*6;
+      ctx.beginPath();ctx.arc(c[0],c[1],16,0,7);ctx.arc(c[0]+20,c[1]-6,20,0,7);ctx.arc(c[0]+40,c[1],16,0,7);ctx.fill();});}
+  if(S.weather==='rain'){ctx.fillStyle='rgba(120,120,130,.6)';ctx.fillRect(ww/2-140,76,90,26);ctx.fillRect(ww/2+100,70,70,20);}
+  if(S.weather==='snow'){ctx.fillStyle='rgba(200,210,230,.7)';ctx.fillRect(ww/2-140,76,90,26);}
+}
+function drawBackyard(h){
+  const ww=S.worldW||W, wh=S.worldH||H;
+  ctx.fillStyle='#79c05e';ctx.fillRect(0,140,ww,wh-140);
+  ctx.fillStyle='rgba(0,80,0,.08)';
+  const grassN=Math.min(5000,Math.max(160,Math.round(ww*wh/5200)));
+  for(let i=0;i<grassN;i++){const x=((i*97)%ww),y=150+((i*53)%(wh-150));ctx.fillRect((x+Math.sin(x*.05)*6)%ww,y,3,3);}
+  ctx.fillStyle=isNight()?'#6a4a28':'#a9743f';
+  for(let x=0;x<ww;x+=46){ctx.fillRect(x,138,40,8);ctx.fillRect(x+30,94,8,56);}
+  ctx.fillRect(0,90,ww,8);
+  for(let x=0;x<ww;x+=46){ctx.fillRect(x,wh-46,40,8);ctx.fillRect(x+30,wh-54,8,30);}
+  drawDoghouse(70,470);
+  ctx.fillStyle=isNight()?'#4a2c16':'#7a4a24';ctx.fillRect(132,150,16,70);
+  ctx.fillStyle=isNight()?'#2f5e2c':'#3f8f3a';
+  [[0,150,34],[-26,162,24],[26,162,24]].forEach(c=>{ctx.beginPath();ctx.arc(treeX()+c[0],c[1],c[2],0,7);ctx.fill();});
+  ctx.fillStyle='rgba(0,40,0,.18)';ctx.beginPath();ctx.ellipse(168,248,50,26,0,0,7);ctx.fill();
+  const pal=['#ff9ad5','#ffd166','#ff7aa2','#b388ff'];
+  for(let i=0;i<16;i++){const a=i*2.6;ctx.fillStyle=pal[i%4];
+    ctx.beginPath();ctx.arc(528+Math.cos(a)*22,132+Math.sin(a*i*.6)*14,4,0,7);ctx.fill();}
+  ctx.fillStyle=isNight()?'#2a5b8a':'#4da6e0';ctx.beginPath();ctx.ellipse(816,470,42,24,0,0,7);ctx.fill();
+  ctx.fillStyle=isNight()?'#3d78ac':'#7cc4ef';ctx.beginPath();ctx.ellipse(810,464,24,12,0,0,7);ctx.fill();
+  ctx.fillStyle='#d33';ctx.fillRect(709,170,22,44);ctx.beginPath();ctx.arc(720,172,14,Math.PI,0);ctx.fill();
+  ctx.fillStyle='#fff';ctx.fillRect(709,182,22,5);ctx.fillStyle='#a22';ctx.fillRect(704,178,5,10);ctx.fillRect(731,178,5,10);
+  drawTrashCan();
+  drawBowl();
+}
+function treeX(){return 140;}
+function drawTrashCan(){
+  const t=S.trashCan;
+  ctx.fillStyle=isNight()?'#4a5248':'#5a6a5a';ctx.beginPath();ctx.ellipse(t.x,t.y+10,18,6,0,0,7);ctx.fill();
+  ctx.fillStyle=isNight()?'#3c4a3c':'#4f6b4f';ctx.fillRect(t.x-16,t.y-26,32,36);
+  ctx.fillStyle=isNight()?'#5a625a':'#789a78';ctx.fillRect(t.x-16,t.y-30,32,8);
+  ctx.fillStyle=isNight()?'#6a6a3c':'#b8b84a';
+  if(t.rummaged>0){ctx.fillStyle='#c8d848';ctx.fillRect(t.x-2,t.y-14,10,8);}
+  ctx.strokeStyle=isNight()?'#3a423a':'#2c3c2c';ctx.lineWidth=2;
+  [[-10,-24],[10,-24]].forEach(p=>{ctx.beginPath();ctx.moveTo(t.x+p[0],t.y-30);ctx.lineTo(t.x+p[0]+ (p[0]>0?-4:4),t.y-40);ctx.stroke();});
+}
+function drawDoghouse(x,y){
+  ctx.fillStyle=isNight()?'#5a3a24':'#8b5a33';ctx.fillRect(x,y,86,60);
+  ctx.beginPath();ctx.moveTo(x-6,y);ctx.lineTo(x+43,y-38);ctx.lineTo(x+92,y);ctx.fill();
+  ctx.fillStyle='#22150d';ctx.beginPath();ctx.ellipse(x+43,y+55,16,14,0,0,7);ctx.fill();
+  ctx.fillStyle='#d8b48a';ctx.beginPath();ctx.ellipse(x+43,y+53,12,10,0,0,7);ctx.fill();
+}
+function drawBowl(){
+  const b=S.foodBowl;
+  ctx.beginPath();ctx.ellipse(600,522,34,10,0,0,7);ctx.fillStyle=isNight()?'#5a6050':'#8aa';ctx.fill();
+  ctx.fillStyle=isNight()?'#7b3c2c':'#b5651d';ctx.fillRect(585,490,30,32);
+  ctx.fillStyle='#fff';ctx.font='13px sans-serif';ctx.fillText(b>0?'●'.repeat(Math.min(b,5)):'空',588,512);
+}
+function drawDecals(){
+  ctx.fillStyle='rgba(255,220,90,.35)';S.puddles.forEach(p=>{ctx.beginPath();ctx.ellipse(p.x,p.y+4,p.size,p.size*.6,0,0,7);ctx.fill();});
+  ctx.fillStyle='#5c7a3f';S.holes.forEach(h=>{ctx.beginPath();ctx.ellipse(h.x,h.y,12,8,0,0,7);ctx.fill();});
+}
+function seedBfs(){ if(S.butterflies.length)return;
+  S.butterflies=[];for(let i=0;i<3;i++)S.butterflies.push({x:320+i*120,y:150+i*20,ph:rand(7)}); }
+function drawButterflies(){
+  const t=Date.now()/900;
+  S.butterflies.forEach(b=>{b.x+=Math.sin(t+b.ph)*1.4;b.y+=Math.sin(t/1.3+b.ph*2)*1.2;
+    ctx.fillStyle='#ff79c6';ctx.beginPath();ctx.arc(b.x-4,b.y,4,0,7);ctx.arc(b.x+4,b.y,4,0,7);ctx.fill();});
+}
+function drawBall(){
+  const b=S.ball; if(b.state==='fly'){const k=(S.t-b.t0)/24;k=clamp(k,0,1);
+    b.x=b.px+(b.tx-b.px)*k; b.y=b.py-(b.ty-b.py)*k*1+Math.sin(Math.PI*k)*80;}
+  ctx.fillStyle=b.kind==='frisbee'?'#e0534a':(b.kind==='bone'?'#d8c9a0':'#ff5a4a');
+  if(b.kind==='frisbee'){ctx.beginPath();ctx.ellipse(b.x,b.y,16,5,b.state==='fly'?0.4:0,0,7);ctx.fill();}
+  else{ctx.beginPath();ctx.arc(b.x,b.y,9,0,7);ctx.fill();}
+}
+function drawDog(){
+  const d=S.dog, bs=breedStyle();
+  ctx.save(); ctx.translate(d.x,d.y); ctx.scale(d.face,1);
+  const moving=d.moving;
+  const wag = d.action==='wag';
+  const tailA=wag?Math.sin(Date.now()/60)*0.9:(d.action==='roll'?1.2:(d.sitting?-0.3:0.4));
+  ctx.strokeStyle=bs.leg;ctx.lineWidth=bs.tail==='stub'?9:6;ctx.lineCap='round';
+  if(bs.tail==='stub'){ctx.beginPath();ctx.moveTo(-15,2);ctx.lineTo(-22+Math.sin(Date.now()/60)*4,-2);ctx.stroke();}
+  else if(bs.tail==='puff'){ctx.fillStyle=bs.ear;ctx.beginPath();ctx.arc(-20,-10+Math.sin(Date.now()/60)*3,7,0,7);ctx.fill();}
+  else{ctx.beginPath();ctx.moveTo(-16,2);ctx.quadraticCurveTo(-26,-4,-28+Math.sin(Date.now()/60)*3,-16+tailA*4);ctx.stroke();}
+  ctx.fillStyle=bs.leg;
+  const lf=moving?Math.sin(d.walking)*4:0;
+  if(d.sitting){ctx.fillRect(-10,5,5,8);ctx.fillRect(8,5,5,8);}
+  else if(d.rolling){ctx.fillStyle=bs.c;ctx.fillRect(-16,-8,32,12);}
+  else{[[-9,10,lf],[-2,10,-lf],[7,10,-lf],[14,10,lf]].forEach(L=>{ctx.fillRect(L[0],8,5,10+L[1]+L[2]);});}
+  if(d.rolling){ /* rolled */ }
+  ctx.fillStyle=bs.c;
+  if(d.rolling){ctx.fillStyle=bs.c;ctx.beginPath();ctx.ellipse(0,-2,20,11,0,0,7);ctx.fill();}
+  else{ctx.beginPath();ctx.ellipse(0,0,22,13,0,0,7);ctx.fill();
+    ctx.fillStyle=bs.belly;ctx.beginPath();ctx.ellipse(4,6,12,6,0,0,7);ctx.fill();}
+  if(S.breed==='husky'){ctx.fillStyle='#e8f0f5';ctx.beginPath();ctx.ellipse(18,-4,8,6,0,0,7);ctx.fill();}
+  if(S.breed==='corgi'){ctx.fillStyle='#f5e7c8';ctx.beginPath();ctx.ellipse(-4,-8,10,6,0,0,7);ctx.fill();}
+  if(S.breed==='poodle'){ctx.fillStyle='#fdf6e8';[[-8,-12],[2,-14],[12,-13]].forEach(c=>{ctx.beginPath();ctx.arc(c[0],c[1],5,0,7);ctx.fill();});}
+  ctx.fillStyle=bs.c;
+  if(!d.rolling&&!d.sitting){ctx.beginPath();ctx.ellipse(22,-6,12,11,0,0,7);ctx.fill();}
+  else if(d.rolling){ctx.beginPath();ctx.ellipse(22,-4,12,10,0,0,7);ctx.fill();}
+  ctx.fillStyle=bs.ear;
+  if(!d.sleeping){ if(S.breed==='corgi'||S.breed==='poodle'){ctx.beginPath();ctx.ellipse(15,-18,7,12,0.2,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(29,-18,7,12,-0.2,0,7);ctx.fill();}
+    else{ctx.beginPath();ctx.ellipse(16,-16,6,10,0.3,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(28,-16,6,10,-0.3,0,7);ctx.fill();} }
+  else{ctx.beginPath();ctx.ellipse(16,-12,6,5,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(28,-12,6,5,0,0,7);ctx.fill();}
+  if(d.sleeping){ctx.fillStyle='#3a4';ctx.fillRect(24,-10,9,1.8);}
+  else{const eye= d.action==='wag'? (Math.sin(Date.now()/400)*0.5):0;
+    ctx.strokeStyle='#222';ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.arc(26+eye,-8,2.4,0,7);ctx.stroke();
+    ctx.beginPath();ctx.arc(32+eye,-4,2.6,0,7);ctx.stroke();
+  }
+  ctx.strokeStyle='#333';ctx.lineWidth=1.6;
+  ctx.beginPath();ctx.moveTo(34,-2);ctx.quadraticCurveTo(30,3,26,1);ctx.stroke();
+  if(d.legUp){ctx.strokeStyle=bs.leg;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(6,8);ctx.lineTo(14,-4);ctx.stroke();
+    ctx.fillStyle='rgba(255,230,120,.5)';ctx.beginPath();ctx.arc(20,-6,3+Math.sin(Date.now()/80)*2,0,7);ctx.fill();}
+  if(d.digging){ctx.fillStyle='rgba(120,90,40,.5)';for(let k=0;k<4;k++)ctx.fillRect(14+rand(8),6+rand(4),3,3);}
+  if(d.sleeping&&Math.random()<.05){ctx.fillStyle='#4a6';ctx.font='14px sans-serif';ctx.fillText('Z',30+rand(8),-20-rand(10));}
+  if(d.petT>0&&Math.random()<.3){ctx.fillStyle='#ff9ad5';ctx.font='12px sans-serif';ctx.fillText('♡',26+rand(10),-24-rand(6));}
+  ctx.restore();
+}
+function drawBubble(){
+  const d=S.dog; if(!d.lastThought||d.sleeping)return;
+  const bx=d.x+(d.face>0?26:-220),by=d.y-54,tw=210;
+  ctx.fillStyle='rgba(255,255,255,.92)';ctx.strokeStyle='#555';ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(bx,by,tw,44,8);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(bx+20,by+44);ctx.lineTo(bx+30,by+54);ctx.lineTo(bx+42,by+44);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#333';ctx.font='12px sans-serif';
+  const t=d.lastThought.length>34?d.lastThought.slice(0,33)+'…':d.lastThought;
+  ctx.fillText(t,bx+8,by+27);
+}
+function drawWeatherFx(){
+  const ww=S.worldW||W, wh=S.worldH||H;
+  if(S.weather==='rain'){ctx.strokeStyle='rgba(180,210,255,.6)';ctx.lineWidth=1;
+    for(let i=0;i<Math.min(300,Math.round(ww*wh/20000));i++){const x=(i*59+Date.now()/8)%ww, y=(Date.now()/40+i*137)%wh;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+10);ctx.stroke();}}
+  if(S.weather==='snow'){ctx.fillStyle='rgba(255,255,255,.9)';
+    if(!S.snow.length)for(let i=0;i<Math.min(300,Math.round(ww*wh/15000));i++)S.snow.push({x:rand(ww),y:rand(wh),s:rand(3)+2});
+    S.snow.forEach(f=>{f.y+=f.s*0.4+ (S.speed*0.3);if(f.y>wh)f.y=0;f.x+=Math.sin(Date.now()/1000+f.s)*0.5;
+      ctx.beginPath();ctx.arc(f.x,f.y,f.s,0,7);ctx.fill();});}
+}
+
+/* =====================================================================
+ * §8 主循环（模组 onTick 钩子）
+ * ===================================================================== */
+let last=Date.now(),acc=0;
+function loop(){
+  const now=Date.now();const dt=Math.min(0.1,(now-last)/1000)*(S.paused?0:S.speed);last=now;
+  const d=S.dog;
+  if(!S.paused){S.t=(S.t+dt*86400/S.dayLen)%86400; }
+  S.wTimer--; if(S.wTimer<0){S.wTimer=35+ri(45);weatherRoll();}
+  Dog.emit('tick', dt);   // 模组逻辑钩子
+  if(d.moving){const dx=d.tx-d.x,dy=d.ty-d.y,dist=Math.hypot(dx,dy);const sp=70*dt;
+    if(dist<4){d.x=d.tx;d.y=d.ty;d.moving=false;if(!d.sleeping)setAction('idle');}
+    else{d.x+=dx/dist*sp;d.y+=dy/dist*sp;if(Math.abs(dx)>2)d.face=dx>0?1:-1;d.walking+=dt*10;
+      S.stats.distance+=sp;}
+  }
+  const hour=S.t/3600;
+  if(d.sleeping){d.energy=clamp(d.energy+5*dt,0,100);d.sleepT=(d.sleepT||0)+dt;
+    if(d.energy>97||d.sleepT>24){d.sleeping=false;d.sleepT=0;S.stats.sleep++;setAction('idle');think('睡饱啦，精神满满！');addXp(6);checkAchieve();}}
+  else if(!d.paused){
+    d.energy=clamp(d.energy-(hour<8||hour>=20?0.1:0.3)*dt,0,100);
+    d.hunger=clamp(d.hunger+0.10*dt,0,100);
+    d.bladder=clamp(d.bladder+0.9*dt,0,100);
+  }
+  if(d.stayT){d.stayT-=dt;if(d.stayT<=0){d.stayT=0;setAction('idle');}}
+  if(d.petT>0)d.petT-=dt;
+  d.mood=clamp(100-d.hunger*0.6 - (isNight()&&!d.sleeping?10:0),0,100);
+  const asleep= d.sleeping || (hour>=22||hour<6);
+  if(aiRunning&&!S.paused&&!asleep){
+    acc+=dt*S.speed; if(acc>=cfg.interval){acc=0;aiTick();}
+  }
+  $('clockTxt').textContent=fmtTime();
+  $('weatherTxt').textContent=weatherName();
+  updateStatsUI(); render();
+  requestAnimationFrame(loop);
+}
+function weatherRoll(){
+  const r=rand(100);
+  if(isNight()){ S.weather=r<70?'clear':'cloudy'; S.weather='clear'; }
+  else if(r<45)S.weather='sunny';
+  else if(r<70)S.weather='cloudy';
+  else if(r<86)S.weather='rain';
+  else S.weather='snow';
+  if(S.weather!=='sunny'&&S.weather!=='cloudy')log('🌦 天气变为：'+weatherName());
+}
+/* 快捷键 */
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();togglePause();}
+  if(e.key==='f')throwToy('frisbee'); if(e.key==='b')throwToy('ball');
+  if(e.key==='P'||e.key==='p')fillBowl();
+});
+function togglePause(){S.paused=!S.paused;$('pseBtn').textContent=S.paused?'▶':'⏸';log(S.paused?'⏸ 已暂停':'▶ 已继续');}
+let spdIdx=0;const spds=[1,2,4,10];
+function cycleSpeed(){spdIdx=(spdIdx+1)%spds.length;S.speed=spds[spdIdx];$('spdTxt').textContent='⏩ '+S.speed+'x';log('速度 '+S.speed+'x');}
+
+/* ============ 导出 / 导入（含模组数据） ============ */
+function exportAll(){
+  const dd={cfg,profile:{name:S.name,color:S.color,breed:S.breed},memory:S.memory,stats:S.stats,xp:S.xp,lvl:S.lvl,achieved:[...achieved],loyalty:S.loyalty,trash:S.trashCan.rummaged,qtable:QL.q};
+  Dog.emit('save', dd);
+  const blob=new Blob([JSON.stringify(dd,null,2)],{type:'application/json'});
+  const aEl=document.createElement('a');aEl.href=URL.createObjectURL(blob);aEl.download='狗后院备份.json';aEl.click();
+  log('📦 已导出备份');
+}
+function importAll(){$('impfile').click();}
+function doImport(ev){
+  const f=ev.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=e=>{try{const d=JSON.parse(e.target.result);
+    if(d.cfg){Object.assign(cfg,d.cfg);saveSettings();}
+    if(d.profile){S.name=d.profile.name;S.color=d.profile.color;S.breed=d.profile.breed;$('dogName').value=S.name;$('dogColor').value=S.color;$('breed').value=S.breed;}
+    if(Array.isArray(d.memory))S.memory=d.memory;
+    if(d.stats)Object.assign(S.stats,d.stats);if(d.xp)S.xp=d.xp;if(d.lvl)S.lvl=d.lvl;
+    if(d.loyalty!=null)S.loyalty=d.loyalty; if(d.trash!=null)S.trashCan.rummaged=d.trash;
+    if(d.qtable&&d.qtable.q)QL.q=d.qtable.q;
+    if(d.achieved&&Array.isArray(d.achieved))achieved=new Set(d.achieved);
+    Dog.emit('load', d);
+    renderMemory();saveAll();log('📥 导入成功');toasty('资料已恢复');}catch(e){log('❌ 导入失败: '+e.message);}};
+  r.readAsText(f); ev.target.value='';
+}
+function tab(k){['L','M','A'].forEach(x=>{$('tab'+x).classList.toggle('on',x===k);$('pane'+x).classList.toggle('on',x===k);});}
+
+/* =====================================================================
+ * §9 启动
+ * ===================================================================== */
+loadAll();loadCfg();updateStatus();updateStratUI();renderMemory();renderAchieve();
+QL.load();
+$('headTitle').textContent='🐕 '+S.name+' 的后院';
+log('🐕 欢迎回来！'+S.name+' 已就位。');
+log('🧠 v3.2 已整合《通用游戏AI逻辑模板》：状态/动作/策略/评估 + 模组系统 + 动态世界/相机');
+log('💡 提示：点画布移动、点物件互动、空格暂停、可切换策略、加载模组。');
+requestAnimationFrame(loop);
+</script>
+<script>
+/* =====================================================================
+ * 🐱 后院猫咪模组 cat-mod.js  v2.0.0
+ * 基于《通用游戏AI逻辑模板》：猫 = 独立 AI 实体
+ *   猫状态(CatState) + 猫动作(CatActions) + 猫策略(CatStrategies) + 猫评估(CatEvaluate)
+ * 特性：
+ *  1. 院子里出现一只由 AI 驱动的猫（本地规则/随机/贪心，或远程大模型代理大脑）
+ *  2. 猫拥有独立状态：精力/饥饿/心情/膀胱/友好度，会自己吃喝睡玩
+ *  3. 与狗狗深度互动：蹭蹭、玩耍、偷吃狗粮、被撸被吓跑
+ *  4. 存档/渲染/决策循环全部走模组钩子，不改主程序
+ * 加载方式：游戏内「📂 加载模组(.js)」选择本文件，或填 URL 加载
+ * ===================================================================== */
+(function () {
+  'use strict';
+
+  /* ============ 猫状态 State ============ */
+  const CAT = {
+    x: 500, y: 320, tx: 500, ty: 320, face: -1, moving: false,
+    energy: 92, hunger: 18, mood: 78, bladder: 30,
+    action: 'idle', sleeping: false, sleepingT: 0,
+    scratchT: 0, hissT: 0, meowT: 0, petT: 0, loveT: 0,
+    aff: 0,                // 对狗友好度 0-100
+    fear: 0,               // 恐惧值（被吓）
+    strategy: 'cat-rule',  // cat-rule / cat-random / cat-greedy / cat-remote
+    remoteOn: false,       // 是否让远程大模型代理猫大脑
+    decideT: 0, walkT: 0,
+    alive: true, bornT: 0,
+  };
+
+  /* 猫动作注册表（模板：动作空间） */
+  const CatActions = {};
+  function registerAction(name, def) { CatActions[name] = def; }
+  function candidates() {
+    return ['cat_move_to', 'cat_sleep', 'cat_scratch', 'cat_play', 'cat_meow',
+      'cat_eat', 'cat_hiss', 'cat_approach_dog', 'cat_think'];
+  }
+
+  /* ============ 猫动作 Actions ============ */
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  function goToCat(x, y) {
+    CAT.tx = clamp(x, 40, W - 40); CAT.ty = clamp(y, 90, H - 50);
+    if (dist(CAT, { x: CAT.tx, y: CAT.ty }) > 6) { CAT.moving = true; CAT.action = 'walk'; CAT.sleeping = false; }
+  }
+  function catExec(name, args) {
+    args = args || {}; const dog = S.dog;
+    let result = '';
+    switch (name) {
+      case 'cat_move_to':
+        goToCat(args.x != null ? args.x : rand(W), args.y != null ? args.y : rand(H));
+        CAT.action = 'walk'; result = `溜达到 (${CAT.tx | 0},${CAT.ty | 0})`; break;
+      case 'cat_sleep':
+        goToCat(168, 260);
+        setTimeout(() => { if (dist(CAT, { x: 168, y: 260 }) < 60) { CAT.sleeping = true; CAT.sleepingT = 0; CAT.action = 'sleep'; } }, 800);
+        result = '去树荫睡觉'; break;
+      case 'cat_scratch':
+        CAT.action = 'scratch'; CAT.scratchT = 1.2;
+        setTimeout(() => { if (CAT.action === 'scratch') CAT.action = 'idle'; }, 1200);
+        result = '挠痒痒'; break;
+      case 'cat_play':
+        goToCat(CAT.x + (rand(2) ? 1 : -1) * rand(120), CAT.y - rand(80));
+        CAT.action = 'play'; CAT.playT = 2;
+        setTimeout(() => { if (CAT.playT) CAT.playT = 0; }, 2000);
+        if (CAT.energy > 40) CAT.energy = clamp(CAT.energy - 6, 0, 100);
+        result = '自己追影子玩'; break;
+      case 'cat_meow':
+        CAT.action = 'meow'; CAT.meowT = 1; think('喵～');
+        setTimeout(() => { if (CAT.action === 'meow') CAT.action = 'idle'; }, 900);
+        result = '喵喵叫'; break;
+      case 'cat_eat':
+        goToCat(600, 520);
+        setTimeout(() => { if (dist(CAT, { x: 600, y: 520 }) < 55 && S.foodBowl.fill > 0) {
+            S.foodBowl.fill--; CAT.hunger = clamp(CAT.hunger - 40, 0, 100);
+            CAT.mood = clamp(CAT.mood + 6, 0, 100); CAT.action = 'eat';
+            think('猫偷吃了狗粮！'); log('🐱 猫偷吃了一勺狗粮…');
+            if (dist({ x: dog.x, y: dog.y }, { x: 600, y: 520 }) < 80) { dog.mood = clamp(dog.mood - 5, 0, 100); log('🐕 狗狗有点不满'); }
+          } }, 900);
+        result = '去偷吃狗粮'; break;
+      case 'cat_hiss':
+        CAT.action = 'hiss'; CAT.hissT = 1.4;
+        think('哈——！离我远点！'); log('🐱 猫对狗哈气（嘶——）');
+        dog.mood = clamp(dog.mood - 4, 0, 100); CAT.aff = clamp(CAT.aff - 4, 0, 100);
+        setTimeout(() => { if (CAT.action === 'hiss') CAT.action = 'idle'; }, 1400);
+        result = '哈气警告'; break;
+      case 'cat_approach_dog': {
+        goToCat(dog.x + 30, dog.y);
+        setTimeout(() => { if (dist(CAT, { x: dog.x + 30, y: dog.y }) < 65 && CAT.aff > 20) {
+            CAT.loveT = 2.5; CAT.mood = clamp(CAT.mood + 10, 0, 100);
+            dog.mood = clamp(dog.mood + 6, 0, 100); dog.loyalty = clamp(dog.loyalty + 2, 0, 100);
+            think('猫蹭了蹭我，好开心～'); log('🐱🐕 猫和狗狗蹭蹭和好了');
+            addXp(5);
+          } }, 1100);
+        result = '去找狗互动'; break;
+      }
+      case 'cat_think':
+        if (args.thought) think('🐱 ' + args.thought);
+        result = '表达想法'; break;
+      default: result = '未知猫动作';
+    }
+    return result;
+  }
+
+  /* ============ 猫评估 Evaluate ============ */
+  function catEvalState() {
+    return CAT.energy * 0.5 + (100 - CAT.hunger) * 0.4 + CAT.mood * 0.6 + CAT.aff * 0.3;
+  }
+  function catEvalAction(name) {
+    const hour = S.t / 3600, night = hour >= 22 || hour < 6;
+    let s = 0;
+    switch (name) {
+      case 'cat_sleep': s = (100 - CAT.energy) * 1.2 + (CAT.energy < 35 ? 40 : 0) + (night ? 30 : 0); break;
+      case 'cat_eat': s = CAT.hunger * 1.0 + (CAT.hunger > 55 ? 30 : 0) + (S.foodBowl.fill <= 0 ? -25 : 0); break;
+      case 'cat_play': s = (CAT.energy > 45 && !night) ? 18 : -8; break;
+      case 'cat_scratch': s = 6 + rand(5); break;
+      case 'cat_meow': s = 3 + rand(6); break;
+      case 'cat_hiss': s = (CAT.aff < 15 && dist(CAT, S.dog) < 80) ? 20 : -10; break;
+      case 'cat_approach_dog': s = (CAT.aff > 20 && CAT.mood > 50) ? 22 : -15; break;
+      case 'cat_move_to': s = 5 + rand(6); break;
+      case 'cat_think': s = 1; break;
+    }
+    return s + rand(2);
+  }
+
+  /* ============ 猫策略 Strategies ============ */
+  const CatStrategies = {};
+  function catDecide() {
+    const st = CAT.strategy;
+    if (st === 'cat-random') { catExec(candidates()[ri(candidates().length)], {}); return; }
+    if (st === 'cat-greedy') {
+      let best = 'cat_move_to', bs = -1e9;
+      candidates().forEach(a => { const sc = catEvalAction(a); if (sc > bs) { bs = sc; best = a; } });
+      catExec(best, {}); return;
+    }
+    if (st === 'cat-remote' && CAT.remoteOn) { callCatAPI(); return; }
+    /* cat-rule 规则策略 */
+    const hour = S.t / 3600, night = hour >= 22 || hour < 6;
+    if (CAT.sleeping) return;
+    if (CAT.fear > 0) { CAT.fear -= 8; goToCat(CAT.x - 90, CAT.y - 30); return; }
+    if (CAT.energy < 30) { catExec('cat_sleep', {}); return; }
+    if (CAT.hunger > 60 && S.foodBowl.fill > 0) { catExec('cat_eat', {}); return; }
+    if (CAT.aff > 20 && dist(CAT, S.dog) < 160 && rand(5) < 1) { catExec('cat_approach_dog', {}); return; }
+    if (dist(CAT, S.dog) < 40 && CAT.aff < 15) { catExec('cat_hiss', {}); return; }
+    if (CAT.hunger > 35 && S.foodBowl.fill > 0 && rand(4) < 1) { catExec('cat_eat', {}); return; }
+    const acts = ['cat_move_to', 'cat_move_to', 'cat_scratch', 'cat_play', 'cat_meow', 'cat_play'];
+    if (night) acts.push('cat_sleep');
+    catExec(acts[ri(acts.length)], {});
+  }
+
+  /* ============ 远程大模型代理猫大脑 ============ */
+  let catBusy = false;
+  const catTools = [
+    { name: 'cat_move_to', desc: '猫移动到某个位置 (x:40-920, y:90-570)。', params: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, reason: { type: 'string' } }, required: ['x', 'y'] } },
+    { name: 'cat_sleep', desc: '去树荫下睡觉，恢复精力。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_scratch', desc: '挠痒痒。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_play', desc: '自己玩耍（追影子/打滚），消耗精力但开心。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_meow', desc: '喵喵叫，表达情绪。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_eat', desc: '去狗粮碗偷吃狗粮，降低饥饿。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_hiss', desc: '对狗哈气表示不满。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_approach_dog', desc: '主动靠近狗狗蹭蹭互动，增进感情。', params: { type: 'object', properties: { reason: { type: 'string' } } } },
+    { name: 'cat_think', desc: '表达猫的内心想法（用户可见）。', params: { type: 'object', properties: { thought: { type: 'string' } }, required: ['thought'] } }
+  ];
+  async function callCatAPI() {
+    if (catBusy || S.paused) return;
+    if (!cfg.key) { log('⚠ 猫远程大脑需要 API Key（AI大脑面板）'); return; }
+    catBusy = true;
+    try {
+      const url = cfg.base.replace(/\/$/, '') + '/chat/completions';
+      const body = {
+        model: cfg.model,
+        messages: [
+          { role: 'system', content: '你是后院的一只猫，名叫咪咪。高冷傲娇、好奇心强，偶尔偷吃狗粮，会主动蹭喜欢的狗狗。请基于身体状态、时间、天气与狗狗互动，每次先 cat_think() 表达想法，再调用一个工具。' },
+          { role: 'user', content: `【时间】${fmtTime()} 天气:${weatherName()}\n【身体】精力${CAT.energy | 0} 饥饿${CAT.hunger | 0} 心情${CAT.mood | 0} 对狗友好度${CAT.aff | 0}\n【位置】x=${CAT.x | 0},y=${CAT.y | 0} 狗位置 x=${S.dog.x | 0},y=${S.dog.y | 0}\n【狗粮碗】剩${Math.max(0, S.foodBowl.fill)}份\n【状态】${CAT.sleeping ? '睡觉中' : CAT.action}` }
+        ],
+        tools: catTools.map(t => ({ type: 'function', function: { name: t.name, description: t.desc, parameters: t.params } })),
+        tool_choice: 'auto'
+      };
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key }, body: JSON.stringify(body) });
+      if (!res.ok) { const t = await res.text(); throw new Error('HTTP ' + res.status + ' ' + t.slice(0, 120)); }
+      const data = await res.json();
+      const msg = data.choices?.[0]?.message;
+      if (!msg) return;
+      const calls = msg.tool_calls || [];
+      for (const c of calls) {
+        const fn = c.function || {}; let args = {};
+        try { args = JSON.parse(fn.arguments || '{}'); } catch (e) { }
+        if (CatActions[fn.name]) { const r = catExec(fn.name, args); log('🐱🤖 AI → ' + fn.name + ' (' + r + ')'); }
+      }
+      if (!calls.length && msg.content) think('🐱 ' + String(msg.content).slice(0, 90));
+    } catch (e) { log('⚠ 猫远程大脑失败: ' + e.message); }
+    catBusy = false;
+  }
+
+  /* ============ 猫 UI（插入侧边面板） ============ */
+  function buildCatUI() {
+    const side = document.querySelector('.side');
+    const card = document.createElement('div');
+    card.className = 'card'; card.id = 'catCard';
+    card.innerHTML = `
+      <h3>🐱 猫咪 · 独立AI大脑 <small style="color:var(--sub)">v2.0</small></h3>
+      <div class="lblrow"><span>⚡ 精力</span><span id="cNrg"></span></div><div class="bar"><i id="cbNrg" style="width:0%;background:#9ad5ff"></i></div>
+      <div class="lblrow"><span>🍤 饥饿</span><span id="cHng"></span></div><div class="bar"><i id="cbHng" style="width:0%;background:#ffc94d"></i></div>
+      <div class="lblrow"><span>😼 心情</span><span id="cMood"></span></div><div class="bar"><i id="cbMood" style="width:0%;background:#ff9ad5"></i></div>
+      <div class="lblrow"><span>💕 对狗友好度</span><span id="cAff"></span></div><div class="bar"><i id="cbAff" style="width:0%;background:#ffb347"></i></div>
+      <label style="margin-top:8px">猫的策略（同样基于通用AI模板）</label>
+      <select id="catStrategy" onchange="__catSetStrat()">
+        <option value="cat-rule">规则 Rule（默认）</option>
+        <option value="cat-random">随机 Random</option>
+        <option value="cat-greedy">贪心 Greedy</option>
+        <option value="cat-remote">远程大模型（代理猫大脑）</option>
+      </select>
+      <div class="note" style="margin-top:4px">远程代理复用「AI大脑」面板的 API 配置。选远程后需点下方按钮确认开启。</div>
+      <div class="row" style="margin-top:6px">
+        <button class="blue" onclick="__catToggleRemote()" id="catRemoteBtn">📡 开启远程代理</button>
+        <button class="ghost" onclick="__catPet()">🤚 撸猫</button>
+        <button class="ghost" onclick="__catFeed()">🍤 喂小鱼干</button>
+      </div>
+      <div class="note" style="margin-top:4px">狗执行「撸猫/吓猫」、猫自己会蹭狗、偷吃狗粮，互动会实时反映在双方状态。</div>`;
+    side.insertBefore(card, side.querySelector('.card'));
+    window.__catSetStrat = function () {
+      CAT.strategy = $('catStrategy').value;
+      CAT.remoteOn = CAT.strategy === 'cat-remote';
+      updateCatRemoteBtn(); log('🐱 猫策略切换：' + $('catStrategy').selectedOptions[0].textContent);
+    };
+    window.__catToggleRemote = function () {
+      CAT.remoteOn = !CAT.remoteOn;
+      if (CAT.remoteOn && CAT.strategy !== 'cat-remote') { CAT.strategy = 'cat-remote'; $('catStrategy').value = 'cat-remote'; }
+      updateCatRemoteBtn(); log(CAT.remoteOn ? '📡 猫大脑已接入远程大模型' : '🐱 猫回到本地AI');
+    };
+    window.__catPet = function () { CAT.petT = 2; CAT.mood = clamp(CAT.mood + 12, 0, 100); CAT.aff = clamp(CAT.aff + 6, 0, 100); think('咪咪呼噜呼噜～'); log('🤚 撸了猫，猫很开心'); };
+    window.__catFeed = function () { CAT.hunger = clamp(CAT.hunger - 30, 0, 100); CAT.mood = clamp(CAT.mood + 10, 0, 100); CAT.aff = clamp(CAT.aff + 8, 0, 100); think('小鱼干真香！'); log('🍤 喂了猫小鱼干'); };
+  }
+  function updateCatRemoteBtn() {
+    const b = $('catRemoteBtn'); if (!b) return;
+    b.textContent = CAT.remoteOn ? '📡 远程代理已开启' : '📡 开启远程代理';
+    b.style.background = CAT.remoteOn ? 'var(--acc)' : '';
+  }
+  function updateCatUI() {
+    if (!$('cNrg')) return;
+    $('cNrg').textContent = CAT.energy | 0; $('cbNrg').style.width = CAT.energy + '%';
+    $('cHng').textContent = CAT.hunger | 0; $('cbHng').style.width = CAT.hunger + '%';
+    $('cMood').textContent = CAT.mood | 0; $('cbMood').style.width = CAT.mood + '%';
+    $('cAff').textContent = CAT.aff | 0; $('cbAff').style.width = CAT.aff + '%';
+  }
+
+  /* ============ 猫渲染 Render ============ */
+  function drawCat(g) {
+    const c = CAT;
+    const tailA = c.action === 'play' ? Math.sin(Date.now() / 70) * 0.8 : (c.sleeping ? -0.4 : Math.sin(Date.now() / 900) * 0.3);
+    const b = breedStyle();
+    g.save(); g.translate(c.x, c.y); g.scale(c.face, 1);
+    /* 尾巴 */
+    g.strokeStyle = '#e8865a'; g.lineWidth = 6; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-12, 2);
+    g.quadraticCurveTo(-22, -2, -24 + Math.sin(Date.now() / 70) * 3, -14 + tailA * 8);
+    g.stroke();
+    /* 脚 */
+    g.fillStyle = '#f0a070';
+    const lf = c.moving ? Math.sin(c.walkT) * 3 : 0;
+    if (!c.sleeping) [[-7, 8, lf], [3, 8, -lf], [8, 8, -lf], [17, 8, lf]].forEach(L => g.fillRect(L[0], 7, 4.5, 8 + L[2]));
+    /* 身体 */
+    g.fillStyle = '#f09868'; g.beginPath(); g.ellipse(4, 1, 17, 10, 0, 0, 7); g.fill();
+    g.fillStyle = '#fbe3cf'; g.beginPath(); g.ellipse(8, 6, 9, 4.5, 0, 0, 7); g.fill();
+    /* 花纹 */
+    g.strokeStyle = '#d97a4a'; g.lineWidth = 2;
+    [[-3, -4], [4, -5], [10, -3]].forEach(p => { g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(p[0] + 4, p[1] - 3); g.stroke(); });
+    /* 头 */
+    g.fillStyle = '#f09868'; g.beginPath(); g.arc(20, -7, 10, 0, 7); g.fill();
+    /* 耳朵 */
+    g.beginPath(); g.moveTo(12, -13); g.lineTo(12, -23); g.lineTo(19, -15); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(27, -13); g.lineTo(29, -22); g.lineTo(24, -14); g.closePath(); g.fill();
+    g.fillStyle = '#eeb0a0'; g.beginPath(); g.moveTo(13, -15); g.lineTo(14, -21); g.lineTo(18, -16); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(27, -15); g.lineTo(28, -20); g.lineTo(25, -15); g.closePath(); g.fill();
+    /* 眼睛/表情 */
+    g.strokeStyle = '#2a1a10'; g.lineWidth = 1.2;
+    if (c.sleeping) { g.beginPath(); g.arc(17, -7, 3, 0, Math.PI); g.stroke(); g.beginPath(); g.arc(24, -7, 3, 0, Math.PI); g.stroke(); }
+    else if (c.hissT > 0) { g.beginPath(); g.arc(17, -8, 2, 0, 7); g.stroke(); g.beginPath(); g.arc(24, -8, 2, 0, 7); g.stroke(); g.beginPath(); g.moveTo(15, -6); g.lineTo(12, -8); g.stroke(); g.beginPath(); g.moveTo(26, -6); g.lineTo(29, -8); g.stroke(); }
+    else {
+      const ey = c.action === 'play' ? Math.sin(Date.now() / 300) * 0.8 : 0;
+      g.fillStyle = '#2a1a10'; g.beginPath(); g.ellipse(17 + ey, -8, 1.8, 3, 0, 0, 7); g.fill();
+      g.beginPath(); g.ellipse(24 + ey, -8, 1.8, 3, 0, 0, 7); g.fill();
+    }
+    /* 鼻子胡须 */
+    g.fillStyle = '#e86a5a'; g.beginPath(); g.arc(20.5, -5, 1.5, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(60,40,20,.6)'; g.lineWidth = 0.8;
+    [[18, -4, 12, -6], [18, -3, 12, -3], [23, -4, 29, -6], [23, -3, 29, -3]].forEach(l => { g.beginPath(); g.moveTo(l[0], l[1]); g.lineTo(l[2], l[3]); g.stroke(); });
+    /* 嘴巴 */
+    g.beginPath(); g.moveTo(20.5, -3.5); g.quadraticCurveTo(19, -1, 17.5, -2); g.moveTo(20.5, -3.5); g.quadraticCurveTo(22, -1, 23.5, -2); g.stroke();
+    /* 睡觉 Z */
+    if (c.sleeping && Math.random() < 0.06) { g.fillStyle = '#8aa'; g.font = '13px sans-serif'; g.fillText('Z', 28 + rand(8), -22 - rand(8)); }
+    /* 互动效果 */
+    if (c.petT > 0 && Math.random() < 0.35) { g.fillStyle = '#ff9ad5'; g.font = '12px sans-serif'; g.fillText('♡', 28 + rand(8), -26 - rand(5)); }
+    if (c.loveT > 0) { g.fillStyle = '#ffb347'; g.font = '12px sans-serif'; g.fillText('💞', -30, -20); }
+    if (c.fear > 20) { g.fillStyle = '#666'; g.font = '11px sans-serif'; g.fillText('💦', 28, -24); }
+    /* 名字 */
+    g.fillStyle = 'rgba(0,0,0,.5)'; g.font = '10px sans-serif'; g.fillText('咪咪', -10, 22);
+    g.restore();
+  }
+
+  /* ============ 模组主体 ============ */
+  Dog.Mods.register({
+    id: 'cat-mod',
+    name: '🐱 后院猫咪（完整AI）',
+    version: '2.0.0',
+    desc: '新增一只由AI驱动的猫：独立状态/动作/策略/评估（通用AI模板），可选远程大模型代理大脑，与狗狗深度互动。',
+
+    onLoad(D) {
+      /* 狗的动作扩展：撸猫 / 吓猫（升级版） */
+      D.Actions.register('pet_cat', {
+        desc: '去猫身边互动（摸摸/蹭蹭）', label: '撸猫', value(dog, S) { return CAT.aff > 10 ? 15 : 3; },
+        params: { type: 'object', properties: { reason: { type: 'string' } } },
+        run(args) {
+          if (!CAT.alive) return '猫不在';
+          goTo(CAT.x, CAT.y);
+          setTimeout(() => {
+            if (distSafe({ x: CAT.x, y: CAT.y }) < 70) {
+              CAT.petT = 2; CAT.mood = clamp(CAT.mood + 10, 0, 100); CAT.aff = clamp(CAT.aff + 5, 0, 100);
+              S.loyalty = clamp(S.loyalty + 3, 0, 100); S.mood = clamp(S.mood + 6, 0, 100); addXp(4);
+              think('喵呜～我们做朋友吧'); log('🐱 撸猫成功，猫很开心'); checkAchieve();
+            }
+          }, 900);
+          return '去找猫玩';
+        }
+      });
+      D.Actions.register('scare_cat', {
+        desc: '汪汪叫把猫吓跑（掉好感）', label: '吓猫', value(dog, S) { return CAT.aff < 15 ? 8 : -5; },
+        params: { type: 'object', properties: { reason: { type: 'string' } } },
+        run(args) {
+          if (!CAT.alive) return '猫不在';
+          doBark(); S.loyalty = clamp(S.loyalty - 5, 0, 100);
+          CAT.fear = 60; CAT.mood = clamp(CAT.mood - 15, 0, 100); CAT.aff = clamp(CAT.aff - 10, 0, 100);
+          CAT.sleeping = false;
+          think('哈哈哈猫被我吓跑了'); log('🐱 猫被吓跑了…');
+          return '吓跑猫';
+        }
+      });
+      /* 成就：猫咪之友（友好度达标） */
+      const idx = ACH.findIndex(a => a[0] === 'cat3');
+      if (idx >= 0) { ACH[idx][2] = () => CAT.aff >= 60; }
+      else { ACH.push(['cat3', '🐱 猫咪之友', () => CAT.aff >= 60]); }
+      /* 构建 UI */
+      buildCatUI();
+      updateCatRemoteBtn();
+      log('🐱 完整猫咪模组已就绪：猫有自己的 AI 大脑（规则/随机/贪心/远程大模型）');
+    },
+
+    onUnload() {
+      const c = $('catCard'); if (c) c.remove();
+    },
+
+    hooks: {
+    onTick(dt) {
+      const c = CAT;
+      if (!c.alive) return;
+      c.bornT += dt;
+      /* 状态演化 */
+      const hour = S.t / 3600, night = hour >= 22 || hour < 6;
+      if (c.sleeping) {
+        c.energy = clamp(c.energy + 5.5 * dt, 0, 100); c.sleepingT += dt;
+        if (c.energy > 96 || c.sleepingT > 22) { c.sleeping = false; c.sleepingT = 0; c.action = 'idle'; think('喵～睡饱了'); }
+      } else {
+        c.energy = clamp(c.energy - (night ? 0.08 : 0.26) * dt, 0, 100);
+        c.hunger = clamp(c.hunger + 0.11 * dt, 0, 100);
+      }
+      if (c.hunger > 85) c.mood = clamp(c.mood - 0.4 * dt, 0, 100);
+      if (c.petT > 0) c.petT -= dt; if (c.loveT > 0) c.loveT -= dt; if (c.hissT > 0) c.hissT -= dt; if (c.scratchT > 0) c.scratchT -= dt;
+      c.mood = clamp(c.mood + (c.sleeping ? 0.15 : -0.05) * dt - (night ? 0.1 : 0) * dt, 0, 100);
+      if (c.fear > 0) c.fear -= 6 * dt;
+      /* 移动 */
+      if (c.moving) {
+        const dx = c.tx - c.x, dy = c.ty - c.y, dd = Math.hypot(dx, dy), sp = 85 * dt;
+        if (dd < 5) { c.x = c.tx; c.y = c.ty; c.moving = false; if (!c.sleeping && c.action === 'walk') c.action = 'idle'; }
+        else { c.x += dx / dd * sp; c.y += dy / dd * sp; if (Math.abs(dx) > 2) c.face = dx > 0 ? 1 : -1; c.walkT += dt * 11; }
+      }
+      /* 决策循环（独立于狗） */
+      if (!S.paused && !c.sleeping) {
+        c.decideT += dt * S.speed;
+        if (c.decideT >= 5) { c.decideT = 0; catDecide(); }
+      }
+      updateCatUI();
+    },
+
+    onRender(g) { drawCat(g); },
+
+    onAction(name, args, result) {
+      if (name === 'pet_cat') { /* 狗撸猫时的即时反馈 */ }
+      if (name === 'scare_cat') { /* 已在上方处理 */ }
+    },
+
+    onSave(data) {
+      data.cat = { x: CAT.x, y: CAT.y, energy: CAT.energy, hunger: CAT.hunger, mood: CAT.mood,
+        aff: CAT.aff, fear: CAT.fear, sleeping: CAT.sleeping, strategy: CAT.strategy, remoteOn: CAT.remoteOn };
+    },
+    onLoad(data) {
+      if (data.cat) {
+        const c = data.cat;
+        Object.assign(CAT, { x: c.x, y: c.y, tx: c.x, ty: c.y, energy: c.energy, hunger: c.hunger,
+          mood: c.mood, aff: c.aff, fear: c.fear || 0, sleeping: !!c.sleeping, strategy: c.strategy || 'cat-rule', remoteOn: !!c.remoteOn });
+        if ($('catStrategy')) $('catStrategy').value = CAT.strategy;
+        updateCatRemoteBtn();
+      }
+    }
+  }
+  });
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * ⏩ 倍速模组 speed-mod-v1.js  v1.0.0
+ * 特性：侧边栏新增倍速控制面板，游戏速度可调 0.01x ~ 1000x
+ *   - 预设按钮：0.01x / 0.5x / 1x / 10x / 100x / 1000x
+ *   - 对数滑块：1x → 1000x 平滑调节
+ *   - 输入框：可精确输入 0.01~1000 任意值
+ *   - 与顶部 ⏩ 速度 chip 联动显示
+ * 加载方式：游戏内「🧩 模组」→「📂 加载模组(.js)」选择本文件
+ * ===================================================================== */
+(function () {
+  'use strict';
+
+  Dog.Mods.register({
+    id: 'speed-mod',
+    name: '⏩ 倍速模组（0.01x-1000x）',
+    version: '1.0.0',
+    desc: '侧边栏新增倍速面板：预设按钮 + 对数滑块 + 输入框，游戏速度可调 0.01 ~ 1000 倍速。',
+
+    onLoad(D) {
+      if (!D.setSpeed) { log('⚠ 倍速模组需要主程序 v3.2+（Dog.setSpeed）'); return; }
+      const side = document.querySelector('.side');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>⏩ 倍速控制 <small style="color:var(--sub)">v1.0</small></h3>
+        <div class="lblrow"><span>当前速度</span><b id="spdVal" style="color:var(--acc)">1x</b></div>
+        <input type="range" id="spdRange" min="1" max="1000" value="10" style="width:100%">
+        <div class="row" style="margin-top:6px;flex-wrap:wrap">
+          <button class="ghost" onclick="__spdSet(0.01)">0.01x</button>
+          <button class="ghost" onclick="__spdSet(0.5)">0.5x</button>
+          <button class="ghost" onclick="__spdSet(1)">1x</button>
+          <button class="ghost" onclick="__spdSet(10)">10x</button>
+          <button class="ghost" onclick="__spdSet(100)">100x</button>
+          <button class="ghost" onclick="__spdSet(1000)">1000x</button>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input type="number" id="spdNum" min="0.01" max="1000" step="0.01" value="1" style="flex:1;min-width:0">
+          <button class="blue" onclick="__spdApply()">应用</button>
+        </div>
+        <div class="note" style="margin-top:4px">滑块为对数刻度（1→1000）；输入框可填 0.01~1000 任意值。100x 以上画面会剧烈加速，属正常现象。</div>`;
+      side.appendChild(card);
+
+      window.__spdSet = function (x) { D.setSpeed(x); sync(); };
+      window.__spdApply = function () {
+        const v = parseFloat($('spdNum').value);
+        if (isFinite(v)) D.setSpeed(v); sync();
+      };
+      function sync() {
+        const v = +S.speed.toFixed(3);
+        $('spdVal').textContent = v + 'x';
+        $('spdRange').value = Math.min(1000, Math.max(1, Math.round(1 + Math.log10(Math.max(1, v)) / 3 * 999)));
+        $('spdNum').value = v;
+      }
+      $('spdRange').addEventListener('input', function () {
+        const r = +this.value;
+        D.setSpeed(Math.pow(10, (r - 1) / 999 * 3));
+        sync();
+      });
+      sync();
+      log('⏩ 倍速模组已就绪：0.01x ~ 1000x 可调');
+    },
+
+    onUnload() {
+      const el = $('spdRange'); if (el && el.closest('.card')) el.closest('.card').remove();
+      delete window.__spdSet; delete window.__spdApply;
+    }
+  });
+})();
+
+</script>
+<script>
+/* =====================================================================
+ * 🌍 更大的院子模组 world-mod-v1.js  v1.0.0
+ * 特性：装载后右上角出现「🌍 扩大院子 ×10」按钮
+ *   - 点击一次，世界认知扩大为原先的 10 倍（可无限叠加）
+ *   - 主程序 v3.2+ 提供动态世界与相机跟随：狗/猫可探索更大的院子
+ *   - 背景（草地/栅栏/天空/雨雪）按世界尺寸自动铺满
+ * 加载方式：游戏内「🧩 模组」→「📂 加载模组(.js)」选择本文件
+ * ===================================================================== */
+(function () {
+  'use strict';
+
+  Dog.Mods.register({
+    id: 'world-mod',
+    name: '🌍 更大的院子（世界扩大）',
+    version: '1.0.0',
+    desc: '右上角出现按钮，点击将世界认知扩大 10 倍，可叠加；配合相机跟随探索更大院子。',
+
+    onLoad(D) {
+      if (!D.setWorld) { log('⚠ 世界模组需要主程序 v3.2+（Dog.setWorld）'); return; }
+      const btn = document.createElement('button');
+      btn.id = 'worldBtn';
+      btn.textContent = '🌍 扩大院子 ×10';
+      Object.assign(btn.style, {
+        position: 'fixed', top: '12px', right: '12px', zIndex: '999',
+        background: 'linear-gradient(135deg,#2ecc71,#1abc9c)', color: '#fff', border: 'none',
+        borderRadius: '20px', padding: '9px 16px', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+        boxShadow: '0 3px 10px rgba(0,0,0,.28)', transition: 'transform .15s'
+      });
+      btn.onmouseenter = () => { btn.style.transform = 'scale(1.06)'; };
+      btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
+      btn.onclick = function () {
+        const b = D.getBounds();
+        const r = D.setWorld(b.w * 10, b.h * 10);
+        toasty('🌍 世界认知 ×10 → ' + r.w + ' × ' + r.h);
+        log('🌍 院子已扩大 10 倍：' + b.w + '×' + b.h + ' → ' + r.w + '×' + r.h + '（可继续叠加）');
+      };
+      document.body.appendChild(btn);
+      this._btn = btn;
+      log('🌍 世界模组已加载：右上角按钮可把院子扩大 10 倍，可叠加');
+    },
+
+    onUnload() {
+      const b = document.getElementById('worldBtn'); if (b) b.remove();
+    }
+  });
+})();
+
+</script>
+</body>
+</html>
