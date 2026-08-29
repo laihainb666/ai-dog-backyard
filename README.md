@@ -1,3 +1,14 @@
+---
+AIGC:
+    Label: "1"
+    ContentProducer: 001191440300708461136T1XGW3
+    ProduceID: 7f40075f40fd472178ba0417306d8b11_9e02cac2a37611f1abe1525400e6dd8f
+    ReservedCode1: 3zHz9zNFgrfmFUeZlPPxQty6AKwWnoIN11sIYleVWj5+35KQKaXAJVbiSLRHPglp6VU4AQT91k7XV3BnunBnUtOz9OfUT4FYwAb8PKPmRDaAJJondKJvFUjXIssT1ZHc2Qsqg22Lm+Z2SJsJt86f16Q2/+5rvRUl24UmzZluP8F5LD7bjFXSbMjnPQQ=
+    ContentPropagator: 001191440300708461136T1XGW3
+    PropagateID: 7f40075f40fd472178ba0417306d8b11_9e02cac2a37611f1abe1525400e6dd8f
+    ReservedCode2: 3zHz9zNFgrfmFUeZlPPxQty6AKwWnoIN11sIYleVWj5+35KQKaXAJVbiSLRHPglp6VU4AQT91k7XV3BnunBnUtOz9OfUT4FYwAb8PKPmRDaAJJondKJvFUjXIssT1ZHc2Qsqg22Lm+Z2SJsJt86f16Q2/+5rvRUl24UmzZluP8F5LD7bjFXSbMjnPQQ=
+---
+
 # 🐕 AI 狗狗后院 v3.0（模块化 + 模组版）
 
 > 一只由 AI 驱动、会自己思考的小狗后院模拟器。单文件 HTML，浏览器打开即玩，完全离线可用。
@@ -120,6 +131,32 @@ Dog.Strategies.register('my_strategy', {
 
 ---
 
+## 🐱 后院猫咪模组（cat-mod.js）
+
+> 完整猫咪 AI 模组，已内置在 `dog_backyard.html`（打开即玩），也可作为独立模组文件 `mods/cat-mod.js` 分发/加载。
+
+猫是一只 **独立 AI 实体**，同样遵循《通用游戏 AI 逻辑模板》：
+
+```
+猫状态(CatState) + 猫动作(CatActions) + 猫策略(CatStrategies) + 猫评估(CatEvaluate)
+```
+
+| 能力 | 说明 |
+|---|---|
+| 🧠 四种猫策略 | 规则 Rule（默认）/ 随机 Random / 贪心 Greedy / **远程大模型代理猫大脑** |
+| 🎛 独立状态 | 精力/饥饿/心情/对狗友好度，会自己吃喝睡玩、偷吃狗粮 |
+| 🤝 与狗互动 | 狗可「撸猫/吓猫」；猫会主动蹭狗、对狗哈气；互动实时影响双方状态 |
+| 🏆 成就 | 友好度达标解锁「猫咪之友」 |
+| 💾 存档 | 猫的状态与设置随游戏自动存档/备份 |
+
+### 使用方式
+- 已内置：打开 `dog_backyard.html` 即有猫。
+- 独立分发：在「🧩 模组」面板「📂 加载模组(.js)」选择 `mods/cat-mod.js`，或填 URL 加载。
+- 猫面板位于侧边栏顶部：可切策略、撸猫、喂小鱼干。
+- 选「远程大模型（代理猫大脑）」并在面板点「📡 开启远程代理」后，猫将由大模型接管，复用「AI 大脑」面板的 API 配置。
+
+---
+
 ## 📂 数据与备份
 
 所有进度、记忆、外观、AI 配置、Q 表都自动保存在浏览器本地（localStorage）。换设备或存档用「📦 导出备份」生成 JSON 文件，需要时「📥 导入」恢复。
@@ -145,3 +182,4 @@ Dog.Strategies.register('my_strategy', {
 ---
 
 *基于《通用游戏 AI 逻辑模板》（状态 + 决策策略 + 评估反馈）落地实现。*
+*（内容由AI生成，仅供参考）*
